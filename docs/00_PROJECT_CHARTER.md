@@ -1,6 +1,6 @@
 # 00 - Project charter
 
-**Status:** G00 documentation and authorized local Git commit/merge only; G01 is not requested.
+**Status:** G00 documentation committed and merged locally; G01 scaffold complete on chore/g01-nextjs-scaffold. Supabase and business implementation remain later milestones; G02 has not begun.
 **Reviewed/approved:** 2026-10-06, Asia/Colombo.
 **Sources:** *ApparelFlow ERP - Software Engineering Practical Challenge*, Webtezza (Pvt) Ltd, all six pages/sections 1-16; original G00 request; user's decision-approval table; subsequent synchronous admin-creation clarification.
 
@@ -12,7 +12,7 @@
 
 **DESIGN DECISION (approved by user):** Next.js, TypeScript, Supabase PostgreSQL/Auth/RLS, server RBAC, Zod, Tailwind CSS, shadcn/ui, Vitest, Playwright, Vercel, Next.js Route Handlers, layered modular monolith. No Prisma/Auth.js.
 
-**DESIGN DECISION (approved by user):** G00 updates exactly the fifteen Markdown documents and records the first commit on a new branch merged locally into main. No application code, package installation, scaffolding, migrations, database writes, cloud setup, deployment, or G01.
+**DESIGN DECISION (approved by user):** G00 updated exactly the fifteen Markdown documents and recorded the first commit on a new branch merged locally into main. Its documentation-only restriction remains the historical G00 boundary. The subsequent explicit G01 request authorizes application/tooling scaffolding on a new branch, with no Supabase connection, migrations, authentication, production features, or G02.
 
 **ASSESSMENT REQUIREMENT:** The full 23-module ERP is outside scope. **DESIGN DECISION (implementation scope):** Inventory accounting, payroll, purchasing, shipping, sewing execution beyond Start Sewing, recipe editing, and unrequested reporting/real-time systems are excluded. Single factory, no tenancy. Admin remains secondary to core assessment work.
 
@@ -29,7 +29,7 @@ A classification on a paragraph/table/section applies to its entries unless over
 | PROPOSED ASSUMPTION | Explicit implementation interpretation, not an assessment requirement. |
 | UNRESOLVED | Requires human approval; only the canonical register may record open decisions. |
 
-All 26 historical UD IDs now have approved directions in [APPROVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#approved_decisions). [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) is empty. Exact package versions are selected/pinned in G01; concrete migration/grant/type mechanics are implementation work, not reopened architecture questions. Approved documentation does not authorize G01.
+All 26 historical UD IDs now have approved directions in [APPROVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#approved_decisions). [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) is empty. Exact G01 package/configuration choices are recorded in [G01 scaffold decisions](14_ARCHITECTURE_DECISIONS.md#g01-scaffold-decisions); concrete migration/grant mechanics remain future implementation work, not reopened architecture questions. G01 authorization comes from the subsequent explicit user request.
 
 ## Deliverables and reading map
 

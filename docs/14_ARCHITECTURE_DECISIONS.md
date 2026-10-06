@@ -2,7 +2,7 @@
 
 Classification follows [00](00_PROJECT_CHARTER.md). Assessment source: the supplied six-page Webtezza challenge, sections 1-16. User sources: the original G00 request and the subsequent decision-approval table. External references validate feasibility, not add manufacturing requirements.
 
-**Approval recorded:** 2026-10-06, Asia/Colombo, by the user in this conversation. The decision table approved 25 directions; the subsequent admin-creation clarification approves UD-022. All 26 decisions are now approved and removed from UNRESOLVED_DECISIONS. Approved scope is documentation and local branch/commit/merge work; G01 has not been requested.
+**Approval recorded:** 2026-10-06, Asia/Colombo, by the user in this conversation. The decision table approved 25 directions; the subsequent admin-creation clarification approves UD-022. All 26 decisions are now approved and removed from UNRESOLVED_DECISIONS. G00 documentation/local Git work is complete. The subsequent G01 request authorizes scaffolding on a new branch and explicitly stops before G02.
 
 ## Captured architecture decisions
 
@@ -104,10 +104,54 @@ Approved Next.js/TypeScript/Supabase/Vercel fits the permitted assessment stack.
 
 ## UNRESOLVED_DECISIONS
 
-None. All 26 historical decisions have approved directions recorded above. Exact package versions are selected/pinned during G01 and the assessment schedule is not an architecture blocker. Implementation still needs its separately requested milestone; the current task is documentation plus authorized local Git work.
+None. All 26 historical decisions have approved directions recorded above. G01 package versions are now selected/pinned below, and the assessment schedule is not an architecture blocker. Only G01 scaffold work is currently authorized; subsequent implementation still requires its separately requested milestone.
 
 ## G00 completion record
 
-All fifteen documents reflect the approved decisions. Requirements, approved interpretations, implementation details, and the single unapproved admin provisioning proposal are distinguished. Documentation validation covers structure, links, example payloads, decision/test references, and cross-document consistency.
+All fifteen documents reflect the approved decisions. Requirements, approved interpretations, implementation details, and the approved synchronous admin provisioning direction are distinguished. Documentation validation covers structure, links, example payloads, decision/test references, and cross-document consistency.
 
-The user has authorized the initial documentation commit on a new branch and local merge into main. This is version-control work only. No application code, packages, migrations, database changes, cloud provisioning, deployment, root submission artifacts, or G01 work belong to this task.
+The initial documentation commit `9b9a7a3` was created on a new branch and merged locally into main as authorized. No application code, packages, migrations, database changes, cloud provisioning, deployment, root submission artifacts, or G01 work belonged to G00.
+
+## G01 scaffold decisions
+
+**DESIGN DECISION (implementation detail under approved UD-020):** The explicit G01 request authorizes a scaffold on `chore/g01-nextjs-scaffold`, based on G00 commit `9b9a7a3`. Existing business decisions are preserved. G01 does not authorize a Supabase connection, migrations, authentication, production APIs/features, deployment, or G02.
+
+| ID | Concrete scaffold choice and rationale |
+|---|---|
+| ADR-017 | Next.js 16.3.8 stable, React/React DOM 19.3.0, App Router under src/app, default Turbopack. No Pages Router, React Compiler customization, Prisma, or Auth.js. System fonts avoid a build-time font download. |
+| ADR-018 | Node 22.23.2 pinned in .nvmrc; supported project engine >=22.12.0 <23. npm 10.9.8 recorded in packageManager; engine >=10.9.0 <11. The Node floor satisfies Vitest 5 as well as Next.js. Exact direct dependency versions plus package-lock.json, save-exact, and npm ci provide reproducible installation. |
+| ADR-019 | TypeScript 5.9.3 with strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, bundler resolution, and @/* -> src/*. Package type is module, including the Vitest configuration. Choose TypeScript 5 / ESLint 9 for compatibility: current Next.js React/import/accessibility plugins declare ESLint 9 support, not ESLint 10. ESLint 9.39.5 is upstream EOL; this tooling limitation is explicitly recorded rather than forcing unsupported peer versions. Next route types are generated before tsc. Lint uses Core Web Vitals/TypeScript, explicit-any rejection, and zero warnings; Prettier 3.9.9/EditorConfig define formatting while retaining approved G00 document formatting. |
+| ADR-020 | Tailwind 4.3.3 with matching PostCSS plugin; shadcn 4.21.3 manually initialized using base-nova, RSC/TSX, neutral light CSS-variable theme, components.json, CSS imports, and cn 0.4.0 re-exported from src/lib/utils/index.ts. No UI components or dark-mode implementation. Zod 4.6.5 installed without speculative schemas. |
+| ADR-021 | Vitest 5.0.3 runs tests/unit and tests/integration in Node, with the same @ alias and explicit test imports. Only the class utility has unit smoke coverage. Playwright 1.63.0 runs a home-page smoke test in desktop/mobile Chromium against an isolated production server; test:e2e builds first and remains separate from npm test. No business/integration tests are claimed. |
+| ADR-022 | Future route groups, components, domain modules, server layers, Supabase adapters, types, and integration tests are documented in README; create each directory only when real implementation exists. Current source is root layout/page/styles and the shadcn utility. Future error concepts retain the status mapping in 08; no placeholder error framework, controllers, services, repositories, or APIs. |
+
+The complete dependency/version inventory is authoritative in [package.json](../package.json) and its lockfile. The source tree, scripts, local setup, and future directory layout are documented in [README](../README.md).
+
+Setup follows the official [Next.js App Router installation](https://nextjs.org/docs/app/getting-started/installation), [Tailwind Next.js setup](https://tailwindcss.com/docs/installation/framework-guides/nextjs), and [shadcn manual installation](https://ui.shadcn.com/docs/installation/manual). Public placeholder naming follows [Supabase SSR client guidance](https://supabase.com/docs/guides/auth/server-side/creating-a-client); no client is created in G01. SUPABASE_SERVICE_ROLE_KEY is documented only as server-only, never public or browser-exposed.
+
+Security boundaries remain those in 07/12: UI is not authority; privileged APIs authenticate/authorize on the server; RLS reinforces access; repositories/Auth adapters isolate privileged clients; same-origin mutations and private no-store data apply when those routes exist; no generic production-status mutation.
+
+### Dependency limitations
+
+`npm audit --omit=dev` reports zero vulnerabilities. Full `npm audit` reports nine high-severity findings propagated through development-only Next.js lint and shadcn CLI dependencies from braces 3.0.3. The [upstream advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) lists no patched version. Do not use audit's suggested major downgrades to obsolete Next.js/shadcn tooling, suppress the finding, or claim a clean full audit. Recheck when an upstream fix is available.
+
+[ESLint's support policy](https://eslint.org/version-support/) marks version 9 EOL. Current eslint-plugin-react/import/jsx-a11y peer declarations do not include version 10; retain compatible tooling rather than forcing unsupported peers. Revisit when the Next.js plugin stack supports ESLint 10. Neither limitation changes a business rule or prevents the scaffold checks from running.
+
+### G01 completion evidence
+
+Verified locally on 2026-10-06 using Node 22.23.2/npm 10.9.8. These checks cover only the scaffold, not the future production acceptance cases:
+
+| Check | Actual result |
+|---|---|
+| npm install; fresh npm ci | Both succeeded; lockfile matches all 21 exact direct dependency pins. Recorded audit/EOL limitations above remain. |
+| npm run typecheck | Passed Next.js type generation and strict tsc with no errors. |
+| npm run lint | Passed with zero errors/warnings. |
+| npm test | One Vitest file, two class-utility tests passed; no browser launch. |
+| npm run format:check | Passed for all scaffold files; existing numbered-document formatting preserved. |
+| npx shadcn info | Recognized Next.js/src/RSC/TypeScript/Tailwind 4/base-nova and all aliases; no UI components installed. |
+| npm run test:e2e | Production build passed; desktop/mobile Chromium smoke tests both passed. Initial run preceded completion of browser download and failed launch; after installation, direct Playwright rerun and full test:e2e rerun passed. |
+| Production boot | Playwright-owned next start server returned HTTP 200; home content/title visible, no horizontal overflow or browser page errors on both viewport sizes. Server stopped after tests. |
+| npm audit --omit=dev | Zero production vulnerabilities. Full audit has nine development-only high findings; not represented as a clean audit. |
+| Scope/link/Git review | All fifteen docs retained, twelve unchanged; local Markdown links valid; no business APIs, Supabase wiring, secrets, migrations, fake auth, or placeholder files. git diff --check passed. |
+
+The branch contains 23 new scaffold/configuration/test files and modifications only to documents 00, 13, and 14. No G01 commit, main merge, push, deployment, or G02 was performed. The user requested a new branch; G01 does not automatically authorize a commit. No blocking scaffolding decisions or failed required checks remain.

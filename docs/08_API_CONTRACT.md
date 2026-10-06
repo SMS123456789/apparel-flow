@@ -12,13 +12,23 @@ Success: data plus optional meta(requestId/pagination). Error: error(code/messag
 
 Implementation list defaults: limit 20/max 100, opaque cursor, allowlisted search, stable timestamp/ID ordering. No arbitrary expressions. Sewing status/includeUnverified filters cannot widen VERIFIED-only queries.
 
-## Session, recipe, and order routes
+## Implemented authentication routes (G04)
+
+| Method/path | Request/result | Success |
+|---|---|---|
+| POST /api/auth/login | Strict email (normalized, max 254)/password (1–128); data.user canonical identity plus data.redirectTo fixed role destination. | 200 |
+| POST /api/auth/demo | Strict persona: cutting-supervisor/cutting-verifier/sewing-supervisor; real server-configured account sign-in, same result as login. | 200 |
+| POST /api/auth/logout | Exact Origin; signs out local session, returns data.signedOut=true; works for inactive sessions too. | 200 |
+| GET /api/auth/me | Verified Auth plus matching active profile; data.id/email/fullName/role/isActive. | 200 |
+
+No application signup route. The previous planned /api/session is superseded by /api/auth/me. No acting identity/role/activity fields are accepted in login/demo. Malformed JSON/content type returns 400, schema violations 422, credentials 401, missing/inactive profile 403, dependency failures 503. Every result carries meta.requestId and private,no-store headers; all mutations require the exact APP_ORIGIN.
+
+## Planned recipe and order routes (G05)
 
 S = CUTTING_SUPERVISOR, V = CUTTING_VERIFIER, W = SEWING_SUPERVISOR, A = SYSTEM_ADMIN. Scope is factory-wide by role, never creator-owned.
 
 | Method/path | Role | Request/result | Success |
 |---|---|---|---|
-| GET /api/session | S/V/W/A | Own safe current profile, no secrets. | 200 |
 | GET /api/recipes | S/V | Exact read-only seeded catalog/components. | 200 |
 | POST /api/orders | S | CreateOrderSchema -> CUTTING_IN_PROGRESS with server expectations/revision. | 201 |
 | GET /api/orders | S | Factory cutting records; allowlisted state/search. | 200 |
@@ -29,7 +39,7 @@ S = CUTTING_SUPERVISOR, V = CUTTING_VERIFIER, W = SEWING_SUPERVISOR, A = SYSTEM_
 
 No generic order status setter, DELETE, recipe editor, or admin production route.
 
-## Verification and sewing routes
+## Planned verification and sewing routes (G06–G07)
 
 V may read role-permitted factory verification history; for every count/approve/reject mutation V must not be order creator.
 
@@ -46,7 +56,7 @@ V may read role-permitted factory verification history; for every count/approve/
 
 Canonical /api/verification is singular. Wrong role or self-verification -> 403; RED/missing/uncounted -> 422; invalid state/stale/repeated decision/start -> 409. YELLOW proceeds, cap excess only warns, negative fabric variance stays signed.
 
-## Admin routes
+## Implemented admin routes (G04)
 
 **DESIGN DECISION (approved UD-022):** Synchronous direct creation; temporary password, no invitation/polling operation.
 
@@ -57,6 +67,10 @@ Canonical /api/verification is singular. Wrong role or self-verification -> 403;
 | PATCH /api/admin/users/:id/role | A | Target revision/production role; protected self/promotion guards, audit. | 200 |
 | PATCH /api/admin/users/:id/status | A | Target revision/isActive; no self-deactivation; audit. | 200 |
 | GET /api/admin/audit | A | Safe immutable administrative events. | 200 |
+
+Admin lists accept search (trimmed max 100, literal name/email), role (one of four exact application roles), active (true/false string), limit (1–100, default 20) and cursor (max 512). Audit accepts limit/cursor only. Repeated/unknown parameters fail validation. data.items contains safe records and data.nextCursor is null or an opaque cursor; ordering is createdAt DESC then id DESC. User records include id/email/fullName/role/isActive/revision/createdAt/updatedAt. Audit records include safe actor/target names/IDs, action, beforeState/afterState, requestId and createdAt.
+
+Create fullName is trimmed 1–200, email max 254, temporaryPassword 6–128 before provider policy checks. Role/status revisions are nonnegative safe integer JSON numbers, isActive is a strict boolean and target IDs are UUIDs. All SYSTEM_ADMIN targets are protected from normal role/status changes.
 
 No /api/admin/operations, async 202, invite, password-in-response, normal SYSTEM_ADMIN create/promotion, impersonation, or hard-delete endpoint.
 
@@ -79,6 +93,8 @@ Shape/basic validation in Zod; state, creator separation, authorization, gate in
 Numeric storage/input conventions are [06](06_DATABASE_DESIGN.md). HTML clients may parse valid input for JSON, but server independently rejects invalid numeric types/scale. Empty commands fail required revision/attempt validation.
 
 ## Example payloads
+
+Order/count/hard-stop examples below describe the future manufacturing contract, not G04 endpoints.
 
 Order request:
 
@@ -140,12 +156,12 @@ Missing/uncounted violations explicit. No internal SQL, stack, provider exceptio
 | AuthenticationError | 401 | Invalid/absent validated session. |
 | AuthorizationError | 403 | Wrong/inactive role, creator verification, admin self/promotion restriction. |
 | NotFoundError | 404 | Missing or role-invisible resource. |
-| RequestFormatError | 400 | Malformed JSON/path/query or unsupported filter. |
-| ValidationError | 422 | Invalid shape/basic fields, reason, count/fabric precision, or temporary password. |
+| RequestFormatError | 400 | Malformed JSON/content type or repeated query keys. |
+| ValidationError | 422 | Invalid shape/basic fields, UUID, unknown query filter, reason, count/fabric precision, or temporary password. |
 | BusinessRuleError | 422 | RED/missing/uncounted approval; no cap gate. |
 | InvalidStateTransitionError | 409 | Action illegal for current state. |
 | ConflictError | 409 | Stale revision/attempt, repeated decision/start, duplicate account. |
-| UserProvisioningError | 500 | PROFILE_CREATION_FAILED/USER_CLEANUP_FAILED; compensation attempted, no false success. |
+| UserProvisioningError | 500 | PROFILE_CREATION_FAILED/USER_CLEANUP_FAILED/PROVISIONING_OUTCOME_UNCERTAIN; compensation attempted, no false success. |
 | UnexpectedError | 500 | Sanitized server failure; transaction rollback. |
 | ExternalServiceError | 503 | Auth dependency unavailable; no created profile. |
 

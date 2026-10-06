@@ -2,7 +2,15 @@
 
 **APPROVED EXTENSION:** SYSTEM_ADMIN views/creates production users, changes production roles, activates/deactivates, reviews administrative audit. No manufacturing, impersonation, force-state, or sewing injection.
 
-**DESIGN DECISION (approved UD-011/UD-022):** First admin manually bootstrapped through Supabase. Normal UI/API cannot create/promote another SYSTEM_ADMIN, self-deactivate/self-demote, or self-assign production. User creation is synchronous Auth create -> profile create, with cleanup attempt on profile failure; no invitation/async provisioning system is required initially.
+**DESIGN DECISION (approved UD-011/UD-022):** First admin privately bootstrapped through Supabase by scripts/bootstrap-users.ts using operator-only ignored configuration, explicitly authorized in G04. Normal UI/API cannot create/promote another SYSTEM_ADMIN, self-deactivate/self-demote, or self-assign production. User creation is synchronous Auth create -> profile create, with cleanup attempt on profile failure; no invitation/async provisioning system is required initially.
+
+## G04 delivered behavior
+
+/admin lists/searches application users with literal name/email search, exact role/activity filters and stable keyset pagination. Native Add User/Change Role/Activate–Deactivate dialogs prevent repeated submissions, show validation/errors, clear temporary passwords after completion and confirm dirty cancellation. SYSTEM_ADMIN targets show a protected label. Stale revisions require reloading/reopening the edit; successful server responses alone update state. /admin/audit shows immutable, paginated safe account events and request IDs.
+
+Creation performs Supabase Admin Auth createUser(email_confirm=true), then a backend-only profile-plus-audit transaction. If persistence fails, the service checks whether a profile committed before attempting deletion of only the newly created incomplete Auth identity. Unknown/committed outcomes return PROVISIONING_OUTCOME_UNCERTAIN; absent profile triggers cleanup and controlled PROFILE_CREATION_FAILED/USER_CLEANUP_FAILED. Existing identities are never deleted. No invitation email or mandatory first-login password reset was added.
+
+Role/activity updates lock/recheck the active admin and target, reject all SYSTEM_ADMIN targets, apply expectedRevision and append audit atomically. Four narrowly granted admin gateways support the repository; service_role has no direct DML and no manufacturing command. The operator bootstrap is idempotent, verifies existing credentials before granting a profile, refuses role/name/activity mismatches and never resets existing passwords.
 
 ## Screens
 
@@ -10,7 +18,7 @@
 |---|---|---|
 | Users | Name/email/current role/active state/timestamps; safe search/filter/pagination. | Create User; production-role change; activate/deactivate. |
 | Create User | Email, full name, production role, temporary password. | Submit once; show validation/success/sanitized failure. |
-| Administrative audit | Actor/target/action/safe before-after role/activity/time/outcome/request ID. | Read-only search. |
+| Administrative audit | Actor/target/action/safe before-after role/activity/time/outcome/request ID. | Read-only cursor pagination and safe before/after details. |
 
 No order/count/recipe/sewing/override/impersonation navigation. Browser never invokes Supabase Admin API or stores elevated secrets.
 

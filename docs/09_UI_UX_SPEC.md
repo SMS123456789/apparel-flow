@@ -2,17 +2,21 @@
 
 **DESIGN DECISION (approved by user):** Next.js/React, Tailwind CSS, shadcn/ui; explicit Save Counts, email/password SSR cookie sessions, light desktop-first responsive UI. Frontend provides usability and invokes APIs; it cannot grant authority. Screen/layout/breakpoint/accessibility-check details below realize that approved direction.
 
+## G04 implemented screens
+
+Login/demo, four protected role shells, /admin users and /admin/audit follow [15](15_UI_DESIGN_SYSTEM.md). The users screen is a searchable/filterable paginated table with native dialogs, explicit submission, error focus, dirty-discard confirmation and guarded pending actions. Role shells display actual identity only. Production screens below remain G05–G07.
+
 ## Navigation and authentication
 
 | Workspace | Screens | Visible actions |
 |---|---|---|
-| Auth/demo | Login; visible three-persona credential panel | Real sign-in/sign-out; evaluator can authenticate each production account. |
+| Auth/demo | Login; visible three-persona real sign-in panel | Real sign-in/sign-out; evaluator can authenticate each production account. |
 | Cutting Supervisor | Cutting dashboard; Orders; Create Order; Prepared Detail; Rejected/Re-cut Detail | Create, prepare, submit, approved re-cut actions. No counts/sign-off/sewing navigation. |
 | Cutting Verifier | Verification Queue; Verification Terminal; approved history scope | Count, save, approve/reject. No create/recipe-edit/sewing navigation. |
 | Sewing Supervisor | Sewing Queue; Verified Batch Detail | Inspect immutable evidence; Start Sewing. No unverified searches/routes. |
 | SYSTEM_ADMIN | Users; Create User; Administrative Audit | Create with email/full name/production role/temporary password; role/activity management; no production navigation. |
 
-**ASSESSMENT REQUIREMENT (5, p.2):** Visible Role Switcher / Demo Credential Panel with real persona authentication. **DESIGN DECISION (approved by user, UD-015):** Three distinct email/password demo accounts shown for evaluator sign-in; selection authenticates a different account, never edits role metadata. Public signup is disabled. Infrastructure/admin credentials stay private; flush user-scoped view/cache state on account change.
+**ASSESSMENT REQUIREMENT (5, p.2):** Visible Role Switcher / Demo Credential Panel with real persona authentication. **DESIGN DECISION (approved by user, UD-015):** Three distinct real email/password accounts are available for evaluator sign-in. The explicit G04 request permits server-triggered authentication; the implemented panel shows three persona buttons while credentials remain server-side. Selection authenticates a different account and never edits role metadata. Public signup is disabled. Infrastructure/admin credentials stay private; flush user-scoped view/cache state on account change.
 
 Global header shows authenticated name/role and sign-out. Unauthorized navigation receives safe access error from backend; hiding links is only usability. Expired session returns to login; inactive profile shows app access unavailable, even if an Auth session exists.
 

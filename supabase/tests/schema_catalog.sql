@@ -8,7 +8,8 @@ DECLARE
 BEGIN
   ASSERT (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = ANY(tables) AND c.relkind = 'r') = 10, 'Required tables missing';
   ASSERT NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = ANY(tables) AND NOT c.relrowsecurity), 'RLS must be enabled on every application table';
-  ASSERT NOT EXISTS (SELECT 1 FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = ANY(tables)), 'G03 must have no permissive policies';
+  ASSERT (SELECT count(*) FROM pg_policy p JOIN pg_class c ON c.oid=p.polrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public') = 1, 'Only own-active-profile read policy permitted';
+  ASSERT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid='public.profiles'::regclass AND polname='profiles_own_active_read' AND polcmd='r' AND polroles=ARRAY['authenticated'::regrole::oid]), 'Scoped identity policy missing';
   ASSERT NOT EXISTS (SELECT 1 FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = ANY(tables) AND k.contype = 'f' AND k.confdeltype <> 'r'), 'Historical foreign keys must restrict deletion';
   ASSERT (SELECT count(*) FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = ANY(tables) AND k.contype = 'c') = 51, 'Structural CHECK constraints missing';
   ASSERT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.verification_logs'::regclass AND conname = 'verification_logs_reason_whitespace_check' AND convalidated), 'Full rejection-reason whitespace guard missing';
@@ -21,14 +22,31 @@ BEGIN
 
   FOREACH table_name IN ARRAY tables LOOP
     FOREACH actor_role IN ARRAY ARRAY['anon', 'authenticated'] LOOP
-      ASSERT NOT has_table_privilege(actor_role, 'public.' || table_name, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'), 'Ordinary client privilege unexpectedly granted';
+      IF actor_role = 'authenticated' AND table_name = 'profiles' THEN
+        ASSERT has_table_privilege(actor_role, 'public.profiles', 'SELECT'), 'Own identity read grant missing';
+        ASSERT NOT has_table_privilege(actor_role, 'public.profiles', 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'), 'Raw identity mutations denied';
+      ELSE
+        ASSERT NOT has_table_privilege(actor_role, 'public.' || table_name, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'), 'Ordinary client privilege unexpectedly granted';
+      END IF;
     END LOOP;
     ASSERT has_table_privilege('service_role', 'public.' || table_name, 'SELECT'), 'Trusted diagnostic read missing';
     ASSERT NOT has_table_privilege('service_role', 'public.' || table_name, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'), 'Direct privileged mutations must await reviewed commands';
     ASSERT EXISTS (SELECT 1 FROM pg_trigger t WHERE t.tgrelid = ('public.' || table_name)::regclass AND t.tgname = 'prevent_delete' AND t.tgenabled = 'O'), 'No-delete trigger missing';
   END LOOP;
   ASSERT (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'app_private' AND p.prorettype = 'trigger'::regtype AND NOT p.prosecdef AND p.proconfig IS NOT NULL) = 7, 'Private invoker trigger helpers missing';
-  ASSERT NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'app_private' AND (has_function_privilege('anon', p.oid, 'EXECUTE') OR has_function_privilege('authenticated', p.oid, 'EXECUTE') OR has_function_privilege('service_role', p.oid, 'EXECUTE'))), 'Private helpers must not be callable by API roles';
+  ASSERT NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'app_private' AND p.prorettype='trigger'::regtype AND (has_function_privilege('anon', p.oid, 'EXECUTE') OR has_function_privilege('authenticated', p.oid, 'EXECUTE') OR has_function_privilege('service_role', p.oid, 'EXECUTE'))), 'Private helpers must not be callable by API roles';
+  ASSERT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='apparelflow_identity_owner' AND NOT rolcanlogin AND NOT rolsuper AND NOT rolcreaterole AND NOT rolcreatedb AND rolbypassrls), 'Restricted NOLOGIN identity owner required';
+  ASSERT NOT pg_has_role('service_role','apparelflow_identity_owner','MEMBER') AND NOT pg_has_role('authenticated','apparelflow_identity_owner','MEMBER') AND NOT pg_has_role('anon','apparelflow_identity_owner','MEMBER'), 'API roles must not inherit identity owner';
+  ASSERT NOT has_schema_privilege('apparelflow_identity_owner','auth','USAGE') AND NOT has_column_privilege('apparelflow_identity_owner','auth.users','email','SELECT'), 'No managed Auth schema/table grant needed';
+  ASSERT has_table_privilege('apparelflow_identity_owner','app_private.auth_identity_emails','SELECT') AND NOT has_table_privilege('service_role','app_private.auth_identity_emails','SELECT'), 'Private fixed Auth projection only';
+  ASSERT (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('admin_list_users','admin_create_profile','admin_update_profile','admin_list_audit') AND NOT p.prosecdef AND has_function_privilege('service_role',p.oid,'EXECUTE') AND NOT has_function_privilege('authenticated',p.oid,'EXECUTE') AND NOT has_function_privilege('anon',p.oid,'EXECUTE'))=4, 'Four backend-only invoker gateways required';
+  ASSERT (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='app_private' AND p.proname IN ('identity_list_users','identity_create_profile','identity_update_profile','identity_list_audit') AND p.prosecdef AND p.proowner='apparelflow_identity_owner'::regrole AND p.proconfig IS NOT NULL)=4, 'Private restricted-owner commands required';
+  ASSERT NOT has_function_privilege('service_role','app_private.identity_assert_admin(uuid)','EXECUTE'), 'Actor guard is internal only';
+  FOREACH table_name IN ARRAY tables LOOP
+    IF table_name NOT IN ('profiles','admin_audit_events') THEN
+      ASSERT NOT has_table_privilege('apparelflow_identity_owner','public.' || table_name,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'), 'Identity owner must not access production/reference tables';
+    END IF;
+  END LOOP;
   ASSERT (SELECT count(*) FROM pg_indexes WHERE schemaname = 'public' AND indexname = ANY(ARRAY[
     'profiles_role_active_idx', 'cutting_orders_status_created_idx', 'cutting_orders_creator_idx', 'cutting_orders_recipe_idx', 'cutting_orders_started_by_idx', 'order_components_source_idx',
     'verification_attempts_one_open_idx', 'verification_attempts_status_submitted_idx', 'verification_attempts_submitter_idx', 'verification_items_component_idx', 'verification_items_updated_by_idx',

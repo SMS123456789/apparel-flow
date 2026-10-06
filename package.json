@@ -33,7 +33,8 @@
     "supabase:remote:plan": "node --conditions=react-server --import tsx scripts/manage-database.ts plan",
     "supabase:remote:push": "node --conditions=react-server --import tsx scripts/manage-database.ts push",
     "supabase:schema:verify": "node --conditions=react-server --import tsx scripts/manage-database.ts verify",
-    "supabase:types": "node --conditions=react-server --import tsx scripts/manage-database.ts types"
+    "supabase:types": "node --conditions=react-server --import tsx scripts/manage-database.ts types",
+    "bootstrap:users": "node --conditions=react-server --import tsx scripts/bootstrap-users.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

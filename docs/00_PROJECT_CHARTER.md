@@ -1,6 +1,6 @@
 # 00 - Project charter
 
-**Status:** G00 documentation committed; G01/G02 merged into main through PR #1/#2. G03 schema and assessment recipes are applied to cloud PostgreSQL on feat/g03-database-schema; validation evidence is recorded in document 14. Authentication and application business features remain later milestones.
+**Status:** G00 documentation and G01/G02/G03 are merged into main. G04 identity, access and admin work is on feat/g04-identity-admin; see current validation evidence in document 14. Manufacturing workflows remain G05–G07.
 **Reviewed/approved:** 2026-10-06, Asia/Colombo.
 **Sources:** *ApparelFlow ERP - Software Engineering Practical Challenge*, Webtezza (Pvt) Ltd, all six pages/sections 1-16; original G00 request; user's decision-approval table; subsequent synchronous admin-creation clarification.
 
@@ -20,6 +20,8 @@
 
 **ASSESSMENT REQUIREMENT:** The full 23-module ERP is outside scope. **DESIGN DECISION (implementation scope):** Inventory accounting, payroll, purchasing, shipping, sewing execution beyond Start Sewing, recipe editing, and unrequested reporting/real-time systems are excluded. Single factory, no tenancy. Admin remains secondary to core assessment work.
 
+**DESIGN DECISION (explicit G04 request):** Implement real Supabase authentication, SSR cookies/Next.js Proxy, current-profile RBAC, three real demo personas, protected role shells and the synchronous admin extension. The user authorized generating private bootstrap credentials in ignored .env.local and confirmed disabling cloud public signup; the setting was verified through Auth settings. G04 stops before production workflows. Its controlled operator bootstrap creates the initial admin through Supabase Admin Auth; no normal UI/API can create another admin.
+
 ## Evidence and classification
 
 A classification on a paragraph/table/section applies to its entries unless overridden.
@@ -33,7 +35,7 @@ A classification on a paragraph/table/section applies to its entries unless over
 | PROPOSED ASSUMPTION | Explicit implementation interpretation, not an assessment requirement. |
 | UNRESOLVED | Requires human approval; only the canonical register may record open decisions. |
 
-All 26 historical UD IDs now have approved directions in [APPROVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#approved_decisions). [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) is empty. Exact G01 package/configuration choices are recorded in [G01 scaffold decisions](14_ARCHITECTURE_DECISIONS.md#g01-scaffold-decisions), and infrastructure choices in [G02 Supabase foundation decisions](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions). Concrete schema/grant mechanics remain future implementation work, not reopened architecture questions. Each milestone's authorization comes from its explicit user request.
+All 26 historical UD IDs now have approved directions in [APPROVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#approved_decisions). [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) is empty. Exact G01 package/configuration choices are recorded in [G01 scaffold decisions](14_ARCHITECTURE_DECISIONS.md#g01-scaffold-decisions), and infrastructure choices in [G02 Supabase foundation decisions](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions). G03 schema and narrow G04 identity/admin grants are implemented; manufacturing transaction and read-policy mechanics remain later work, not reopened architecture questions. Each milestone's authorization comes from its explicit user request.
 
 ## Deliverables and reading map
 

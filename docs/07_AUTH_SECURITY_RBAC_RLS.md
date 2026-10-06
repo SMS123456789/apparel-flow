@@ -101,3 +101,8 @@ Implementation details:
 ## Proof obligations
 
 Required direct supervisor approval is 403; RED/missing/uncounted is 422; sewing never exposes unapproved data. Approved additions: creator verification 403 after role change; admin self/promotion guards; read access by role across factory; cleanup failure cannot grant missing-profile access. [11](11_TEST_PLAN.md) plans direct API/DB/RPC, concurrency/rollback, audit, origin/cache, and creation-failure tests. None is claimed implemented during G00.
+
+
+## G05 implemented production boundary
+
+The G05 migration adds narrow SELECT grants/policies for active cutting-role catalog and active supervisor factory orders/children. Sewing/admin/inactive subjects receive no production/reference rows. Public cutting_create/cutting_edit/cutting_submit/cutting_recut are invoker-only and executable by service_role alone. Private commands recheck the locked actor's current cutting_supervisor role/activity and order revision/state. The production command owner cannot assign profile roles/activity, access Auth or administer accounts. API-role direct writes and command EXECUTE stay denied. Missing/foreign/empty inputs, trusted client state/identity/expected fields and generic status mutation are rejected at the server boundary.

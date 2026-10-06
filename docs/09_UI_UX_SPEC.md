@@ -73,3 +73,8 @@ Review layouts: desktop 1280px, tablet 768px, narrow mobile 375px; collapse nav,
 Every view includes loading, empty, validation, forbidden, expired-session, conflict, dependency failure, and unexpected-error states. Disable repeated submission while in flight. Do not optimistically announce VERIFIED or user activation before committed response. Retain user-entered fields after recoverable errors; use server request ID for support without exposing technical internals.
 
 Refresh reads persistent data through API. Demo switch clears old account content. Table filtering/page changes preserve authorized scope; public/shared caches cannot hold role-specific results (UD-023).
+
+
+## G05 supervisor implementation
+
+/supervisor is the real cutting-orders table with state/order-number filters, pagination and Create Order. /supervisor/new and /supervisor/:id provide the four preparation inputs, immediate numeric errors, expected fabric/BOM preview, explicit save state and submission confirmation. Rejected detail exposes the reason and Begin Re-cut, while frozen recipe/target remain read-only. The shared native dialog retains keyboard containment. Grid min-width constraints confine mobile table scrolling to its labelled region. Desktop/mobile real browser creation/edit/submit/reload and visual screenshots are checked; broad full-system contrast/accessibility review follows G07.

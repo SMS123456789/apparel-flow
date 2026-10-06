@@ -112,6 +112,10 @@ try {
   console.log(
     "PASS identity/admin RPC grants, own-profile RLS, atomic audits, role/status/revision guards and rollback",
   );
+  sql(readFileSync("supabase/tests/cutting_workflow.sql", "utf8"));
+  console.log(
+    "PASS cutting command authorization, multipliers, frozen submission, re-cut, RLS and injected rollback",
+  );
 } catch (error) {
   console.error(
     error instanceof Error ? error.message : "Isolated database check failed",

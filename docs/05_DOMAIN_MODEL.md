@@ -1,6 +1,6 @@
 # 05 - Domain model and layer boundaries
 
-Classification follows [00](00_PROJECT_CHARTER.md). Assessment entities are required; approved snapshots, attempt history, and Auth/profile separation are realized through the aggregate boundaries below. Names and interfaces are implementation details, not source files or unresolved architecture decisions.
+Classification follows [00](00_PROJECT_CHARTER.md). G03 implements the database entities/snapshots/history described below; application interfaces and collaborations remain future work. The actual tables, constraints, and migration boundaries are in [06](06_DATABASE_DESIGN.md). No controller/service/domain feature has been implemented.
 
 ## Bounded modules and entities
 
@@ -16,21 +16,27 @@ AdminUserService creates Auth identity with temporary password through the serve
 
 ```mermaid
 erDiagram
-    AUTH_USER ||--o| PROFILE : has
-    PROFILE ||--o{ CUTTING_ORDER : creates
-    RECIPE ||--|{ RECIPE_COMPONENT : contains
-    RECIPE ||--o{ CUTTING_ORDER : selected_for
-    CUTTING_ORDER ||--o{ ORDER_COMPONENT_SNAPSHOT : requires
-    CUTTING_ORDER ||--o{ VERIFICATION_ATTEMPT : receives
-    VERIFICATION_ATTEMPT ||--|{ VERIFICATION_ITEM : counts
-    ORDER_COMPONENT_SNAPSHOT ||--o{ VERIFICATION_ITEM : identifies
-    VERIFICATION_ATTEMPT ||--o| VERIFICATION_LOG : decides
-    VERIFICATION_LOG ||--|{ VERIFICATION_LOG_ITEM : freezes
-    PROFILE ||--o{ VERIFICATION_LOG : signs
-    PROFILE ||--o{ ADMIN_AUDIT_EVENT : acts
+    AUTH_USERS ||--o| PROFILES : identifies
+    PROFILES ||--o{ CUTTING_ORDERS : creates
+    PROFILES ||--o{ CUTTING_ORDERS : sewing_start_actor
+    RECIPES ||--|{ RECIPE_COMPONENTS : contains
+    RECIPES ||--o{ CUTTING_ORDERS : selected_for
+    CUTTING_ORDERS ||--o{ ORDER_COMPONENTS : freezes
+    RECIPE_COMPONENTS ||--o{ ORDER_COMPONENTS : source
+    CUTTING_ORDERS ||--o{ VERIFICATION_ATTEMPTS : receives
+    VERIFICATION_ATTEMPTS ||--o{ VERIFICATION_ITEMS : counts
+    ORDER_COMPONENTS ||--o{ VERIFICATION_ITEMS : identifies
+    VERIFICATION_ATTEMPTS ||--o| VERIFICATION_LOGS : decides
+    VERIFICATION_LOGS ||--o{ VERIFICATION_LOG_ITEMS : freezes
+    VERIFICATION_ITEMS ||--o{ VERIFICATION_LOG_ITEMS : evidence_source
+    PROFILES ||--o{ VERIFICATION_LOGS : signs
+    PROFILES ||--o{ ADMIN_AUDIT_EVENTS : acts
+    PROFILES ||--o{ ADMIN_AUDIT_EVENTS : target
 ```
 
 Auth identity may briefly exist before its profile, or remain without one after failed cleanup; missing profile always denies application access. A prepared order can have no attempt/manifest yet. Only submitted orders require frozen manifest and attempt/item set. Submission checks completeness, not only foreign keys. Rejection may contain uncounted items; approval may not.
+
+G03 preserves the stronger documented equivalents allowed by its request: order_components is the frozen BOM, attempts use OPEN/APPROVED/REJECTED, and sewing start is an immutable attributed pair on cutting_orders rather than a separate sewing_starts table. Database app_role values are the lowercase assessment identifiers plus system_admin; future application/API identifiers remain uppercase as documented in [03](03_ROLES_AND_PERMISSIONS.md). This naming mapping does not add roles.
 
 ## Aggregate invariants
 

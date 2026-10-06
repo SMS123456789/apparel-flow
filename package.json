@@ -27,7 +27,13 @@
     "supabase:migration:new": "supabase migration new",
     "supabase:migration:list": "supabase migration list",
     "supabase:db:push": "supabase db push",
-    "supabase:db:reset": "supabase db reset"
+    "supabase:db:reset": "supabase db reset",
+    "test:db": "node --import tsx scripts/test-database.ts",
+    "supabase:remote:list": "node --conditions=react-server --import tsx scripts/manage-database.ts list",
+    "supabase:remote:plan": "node --conditions=react-server --import tsx scripts/manage-database.ts plan",
+    "supabase:remote:push": "node --conditions=react-server --import tsx scripts/manage-database.ts push",
+    "supabase:schema:verify": "node --conditions=react-server --import tsx scripts/manage-database.ts verify",
+    "supabase:types": "node --conditions=react-server --import tsx scripts/manage-database.ts types"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

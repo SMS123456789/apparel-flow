@@ -1,6 +1,6 @@
 # 00 - Project charter
 
-**Status:** G00 documentation committed; G01 scaffold merged into main through PR #1. G02 Supabase infrastructure is implemented on chore/g02-supabase-foundation; validation evidence is recorded in document 14. Application schema and business implementation remain later milestones.
+**Status:** G00 documentation committed; G01/G02 merged into main through PR #1/#2. G03 schema and assessment recipes are applied to cloud PostgreSQL on feat/g03-database-schema; validation evidence is recorded in document 14. Authentication and application business features remain later milestones.
 **Reviewed/approved:** 2026-10-06, Asia/Colombo.
 **Sources:** *ApparelFlow ERP - Software Engineering Practical Challenge*, Webtezza (Pvt) Ltd, all six pages/sections 1-16; original G00 request; user's decision-approval table; subsequent synchronous admin-creation clarification.
 
@@ -15,6 +15,8 @@
 **DESIGN DECISION (approved by user):** G00 updated exactly the fifteen Markdown documents and recorded the first commit on a new branch merged locally into main. Its documentation-only restriction remains the historical G00 boundary. The subsequent explicit G01 request authorizes application/tooling scaffolding on a new branch, with no Supabase connection, migrations, authentication, production features, or G02.
 
 **DESIGN DECISION (approved by user):** The subsequent explicit G02 request authorizes merging the previous G01 PR, then Supabase infrastructure, environment validation, client factories, CLI conventions, and non-mutating connectivity checks. G02 stops before G03: no business tables, seeds, authentication flows, RBAC/RLS policies, admin features, or production APIs.
+
+**DESIGN DECISION (approved by user):** The subsequent explicit G03 request authorizes version-controlled schema/constraints, default-deny RLS/grants, immutable evidence foundations, exact assessment recipe seeds, remote application, generated types, and database verification. It stops before G04 and does not authorize authentication flows, role policies/services, production APIs/UI, admin features, or approval/rejection RPCs.
 
 **ASSESSMENT REQUIREMENT:** The full 23-module ERP is outside scope. **DESIGN DECISION (implementation scope):** Inventory accounting, payroll, purchasing, shipping, sewing execution beyond Start Sewing, recipe editing, and unrequested reporting/real-time systems are excluded. Single factory, no tenancy. Admin remains secondary to core assessment work.
 

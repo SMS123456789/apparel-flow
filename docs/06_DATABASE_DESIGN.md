@@ -2,11 +2,11 @@
 
 **ASSESSMENT REQUIREMENT (8, p.4):** Persistent relational representation of users, recipes/components, orders, verification items/logs; refinements allowed. **DESIGN DECISION (approved by user):** Supabase PostgreSQL/Auth/RLS, no Prisma, no migrations in G00. Single factory, no tenancy or creator-ownership columns/policies.
 
-Logical columns, constraints, indexes, and command internals are implementation details under approved decisions, not executable DDL or reopened architecture blockers.
+G03 implements the relational inventory below through three version-controlled migrations. Future workflow/transaction internals remain design targets; no approval/rejection RPC or application service exists yet.
 
 ## G02 migration foundation
 
-**DESIGN DECISION (implementation detail):** Every application database/schema change must be represented by a version-controlled Supabase SQL migration. The pinned CLI initializes supabase/config.toml; G02 creates no migration, seed, business table, or generated Database type. Cloud is the primary target. Login/link/review/dry-run/push and optional local reset/type-generation commands are documented in [README](../README.md#supabase-migration-workflow). Dashboard inspection and project configuration are allowed; application schema must remain reproducible from the repository. Schema/grants/RLS/RPC implementation starts only with separately authorized G03.
+**DESIGN DECISION (implementation detail):** Every application database/schema change must be represented by a version-controlled Supabase SQL migration. G02 initialized the pinned CLI but created no schema. G03 applies 20261006153000_apparelflow_domain_schema.sql and 20261006153100_assessment_recipes.sql plus the forward 20261006155500_rejection_reason_whitespace.sql fix to cloud PostgreSQL 17.11. The supported --db-url workflow uses the database password through PGPASSWORD without a Management API token/login. Login/link is an optional operator alternative; commands are documented in [README](../README.md#supabase-migration-workflow). Never edit applied SQL; future fixes require new migrations.
 
 ## Assessment mapping
 
@@ -25,16 +25,16 @@ Logical columns, constraints, indexes, and command internals are implementation 
 
 | Table | Principal fields/types | Keys/invariants |
 |---|---|---|
-| public.profiles | id UUID; full_name text; role constrained value; is_active boolean; revision bigint; created_at/updated_at timestamptz | PK/FK id -> auth.users.id; one protected role; no client role/activity writes; email authoritative in Auth. |
-| recipes | id UUID; recipe_code/name/category text; std_fabric_yards numeric(12,3); wastage_cap numeric; created_at timestamptz | Unique recipe_code; standard > 0; cap >= 0; no runtime recipe editor. |
-| recipe_components | id/recipe_id UUID; component_name text; pieces_per_garment integer; image_url nullable text; sort_order integer | FK recipe; positive multiplier; grouped exact BOM; unique(recipe_id, component_name). |
-| cutting_orders | id UUID; order_no text; recipe_id UUID; target_qty integer; fabric_roll_id text; actual_fabric_yds numeric(12,3); status; created_by UUID; current_attempt_id/approved_log_id nullable UUID; sewing_started_at nullable timestamptz; started_by nullable UUID; revision bigint; timestamps | Unique server number; FK recipe/profile; attempt/log belong to order; positive target/fabric; start fields both absent/present, only set while VERIFIED. |
-| order_components | id/order_id/component_id UUID; component_name_snapshot text; pieces_per_garment integer; expected_qty bigint; sort_order integer | Created/frozen on first submit; unique(order_id, component_id); source recipe membership; no post-submit replacement. |
-| verification_attempts | id/order_id UUID; attempt_no integer; OPEN/APPROVED/REJECTED; submitted/closed timestamps; submitted_by UUID; recipe/target/roll/standard/cap/actual/expected-fabric snapshots | Unique(order_id, attempt_no); one OPEN/order; reuse frozen recipe/target/BOM across re-cut; closed attempts immutable. |
-| verification_items | id/order_id/attempt_id/component_id/order_component_id UUID; expected_qty bigint; actual_qty nullable bigint; status nullable GREEN/YELLOW/RED; updated_by/time | Unique(attempt_id, component_id); composite same-order links; actual >= 0/null; flag derived; closed attempt rows immutable. |
-| verification_logs | id/order_id/attempt_id/verifier_id UUID; APPROVED/REJECTED; nullable rejection_note; expected_fabric_yds numeric(24,3); actual_fabric_yds numeric(12,3); wastage_pct numeric(32,12); timestamp; actor role/name snapshots | Unique attempt; at most one APPROVED/order; reason trimmed 1-1000 on rejection; actor != creator; full approved evidence. |
-| verification_log_items | log_id/order_component_id/component_id UUID; component_name; expected_qty; nullable actual/variance; nullable derived flag | PK(log_id, order_component_id); frozen manifest/variances; approved rows never null/RED. |
-| admin_audit_events | id/actor_id/target_user_id UUID; action; safe before/after JSON; server timestamp/outcome/request ID | Immutable; account/profile changes and event in one SQL transaction; no credentials or password fields. |
+| public.profiles | id UUID; full_name; app_role; is_active default false; revision; created_at/updated_at | PK/FK id -> auth.users.id; one role; no password/email copy; stable identity/creation timestamp. |
+| recipes | id UUID; recipe_code/name/category; bounded numeric std_fabric_yards/wastage_cap_pct; created_at | Unique code; positive standard/nonnegative cap; immutable reference data. |
+| recipe_components | id/recipe_id UUID; component_name; positive integer pieces_per_garment/sort_order; nullable image_url; created_at | Recipe FK; unique recipe/name and recipe/sort; immutable reference data. |
+| cutting_orders | id; sequence order_no; recipe_id; positive integer target_qty; roll ID; actual_fabric_yds; production_status; created_by; current_attempt_id/approved_log_id; generated approval_decision; first_submitted_at; sewing_started_at/started_by; revision; timestamps | Same-order current-attempt/approved-decision FKs; VERIFIED iff approved log; sewing actor/time pair requires VERIFIED and becomes immutable. |
+| order_components | id/order_id/recipe_id/component_id UUID; component_name_snapshot; pieces_per_garment; expected_qty bigint; sort_order; created_at | Unique order/component and order/sort; composite source-recipe membership; immutable from insertion, no additions after first submission. |
+| verification_attempts | id/order_id/recipe_id; attempt_no; OPEN/APPROVED/REJECTED; submitted_by; target_qty_snapshot; fabric_roll_id_snapshot/std_fabric_yards_snapshot/wastage_cap_pct_snapshot; actual/expected fabric; submitted_at/closed_at; revision/updated_at | Unique order/attempt; one OPEN/order; frozen submitted basis; finalized attempts immutable. |
+| verification_items | id/order_id/attempt_id/order_component_id/component_id; expected/nullable actual bigint; generated signed variance_qty; nullable component_status; updated_by; created_at/updated_at | Unique attempt/order-component; same-order/expected-basis FKs; count/status nullable together and consistent; finalized evidence cannot change/extend. |
+| verification_logs | id/order_id/attempt_id/verifier_id; verifier name/role snapshots; decision; rejection_note; actual/expected fabric; signed wastage_pct; created_at | Unique attempt; one APPROVED/order; reason trimmed 1-1000 for REJECTED, null for APPROVED; immutable. Future RPC verifies actor/creator/gate/calculation. |
+| verification_log_items | log_id/order_id/attempt_id/order_component_id/component_id; name snapshot; expected/nullable actual; generated variance; nullable status | Natural UUID-pair PK(log_id, order_component_id), no independent identity; same-attempt/count-manifest association; immutable. Future RPC verifies approved completeness. |
+| admin_audit_events | id/actor_id/target_user_id UUID; admin_audit_action; before_state/after_state JSON; request_id UUID; created_at | Immutable; JSON permits typed full_name/role/is_active only, no credential/nested arbitrary payload. Atomic account+audit workflow remains future work. |
 
 No separate roles table, sewing_starts table, tenant/plant tables, or durable admin_operations table is needed. Sewing start metadata lives on cutting_orders. Fabric roll is an identifier, not inventory scope.
 
@@ -43,19 +43,41 @@ No separate roles table, sewing_starts table, tenant/plant tables, or durable ad
 The user's UD-013 approves reasonable bounded columns; these concrete engineering defaults fit the seeded recipes and preserve arithmetic:
 
 - Target/multiplier: positive PostgreSQL integer. Count fields: nonnegative bigint/null with application/DB safe-integer bound 9,007,199,254,740,991; multiplication checked before persistence.
-- Entered yards/standard: positive numeric(12,3). Validate input scale before any cast/write; overprecision fails, never silently rounds into a valid input.
-- Expected fabric: numeric(24,3), allowing target multiplication without overflowing entered-yard width. Wastage: signed numeric(32,12), with enough fractional precision to retain small negative variances within these input bounds. Never clamp.
-- UUID PKs; server-generated unique human number via database sequence, e.g. AF-000001. Formatting is an engineering choice; never count rows for numbering.
+- Entered yards/standard: positive numeric with value < 10^9 and scale <= 3, preserving the planned numeric(12,3) bounds. Checks replace the typmod because PostgreSQL rounds excess scale before CHECK/trigger evaluation. Raw overprecision is rejected by database tests, not merely future Zod validation. Cap uses the same decimal bounds with zero allowed.
+- Expected fabric: positive numeric with value < 10^21 and scale <= 3, preserving numeric(24,3) bounds. Wastage: signed numeric with absolute value < 10^20 and scale <= 12, preserving numeric(32,12) bounds. Never clamp. Future transactions calculate/round analytics explicitly; G03 has no calculation/approval RPC.
+- UUID PKs except the documented natural log/component UUID pair. Private bounded noncycling sequence generates AF- plus twelve digits, e.g. AF-000000000001; never count rows for numbering. Gaps, including rollbacks, are permitted.
 - timestamptz/UTC storage and ISO 8601 output; UI labels its display timezone. JSON count numbers stay safe; decimal outputs use canonical strings.
 - Reason trimmed 1-1000 chars. App schemas/database guards agree on this approved length.
 - Restrictive FKs and denied DELETE preserve established users/orders/recipes/audit. Users deactivate rather than delete; no cascading sign-off deletion.
 - First submit validates exact recipe manifest and freezes it; count rows alone cannot establish completeness. Null actual/flag means uncounted; zero remains counted shortage.
-- Approved status and approved-log reference are mutually consistent and command-only. No generic client UPDATE can fabricate either.
+- Approved status and approved-log reference are mutually consistent; a generated APPROVED discriminator rejects rejection logs through a composite FK. All direct API mutations are denied; future command authorization/completeness remains mandatory.
 - Auth-user cleanup only rolls back a new, incomplete admin creation that failed profile persistence (UD-022). It does not delete established profiles, orders, or audit.
 
 ## Query indexes
 
-Implementation indexes: orders(status, created_at, id), components(recipe_id, sort_order), attempts(order_id, attempt_no), items(attempt_id), logs(order_id, timestamp), audit(target_user_id, timestamp). Creator is historical identity/separation data, not an ownership query filter. Validate actual plans later; no performance measurements are claimed by G00.
+Cloud has 44 indexes: 26 supporting PK/unique constraints plus 18 purposeful indexes. Unique keys cover codes/numbers, recipe sort, order attempts, and attempt items. Additional indexes support order state/time/creator/recipe/sewing actor, profile role/activity, OPEN-attempt and single-approval partial uniqueness, attempt state/time/submitter, component/update-actor FKs, log order/time/verifier, and admin target/time/actor. Creator indexing supports separation/referential checks, not ownership visibility. Query-plan performance remains unmeasured until application queries exist.
+
+## G03 enums, immutability and RLS
+
+Enums: app_role = system_admin/cutting_supervisor/cutting_verifier/sewing_supervisor; production_status = CUTTING_IN_PROGRESS/PENDING_VERIFICATION/REJECTED/VERIFIED; verification_attempt_status = OPEN/APPROVED/REJECTED; component_status = GREEN/YELLOW/RED; verification_decision = APPROVED/REJECTED; admin_audit_action = USER_CREATED/USER_ROLE_CHANGED/USER_ACTIVATED/USER_DEACTIVATED.
+
+All ten tables enable RLS with zero policies. PUBLIC/anon/authenticated have no table privileges; service_role has SELECT only and no direct INSERT/UPDATE/DELETE/TRUNCATE. Future role reads and restricted transaction entry points require reviewed migrations. G03 does not establish an application production-write path.
+
+Seven invoker-only app_private trigger helpers use an empty search_path and qualified relations. API roles lack schema/function/sequence privileges. Twenty-six triggers block hard deletions; protect reference/BOM/log/log-item/admin-audit updates; freeze submitted recipe/target and verified order facts; preserve sewing attribution; freeze attempt inputs/finalized rows; and prevent changing/extending finalized count/sign-off evidence. Reusable set_updated_at covers only profiles/orders/attempts/items and also protects stable IDs/creation timestamps. A database owner can deliberately disable protections; this is outside ordinary application authority.
+
+| Private helper | Purpose |
+|---|---|
+| set_updated_at | Refresh mutable-row timestamps; retain IDs and creation timestamps. |
+| prevent_mutation | Deny hard deletes and edits to immutable reference/BOM/audit rows. |
+| guard_order_history | Freeze submitted recipe/target, verified facts, and one-time sewing attribution. |
+| guard_manifest_insert | Prevent extending the BOM after first submission. |
+| guard_attempt_history | Preserve submitted basis and prohibit finalized-attempt changes. |
+| guard_item_history | Preserve count identity/basis; accept count mutations only while the attempt is OPEN. |
+| guard_open_evidence_insert | Allow decision/component audit insertion only before attempt finalization. |
+
+Future first submission inserts the complete BOM before setting first_submitted_at in the same transaction. Sign-off inserts log/items while the attempt is OPEN, then closes it and updates the order atomically. These ordering requirements support immutability; they do not implement actor authorization, legal transitions, manifest completeness, or approval RPCs in G03.
+
+The deterministic recipe migration supplies only the two exact assessment recipes and ten nullable-image components. Replay is idempotent and validates equality without overwriting conflicts. No cloud profiles/Auth users/orders/verification/sewing/admin events are seeded. CLI definitions live in src/types/database.generated.ts and bind all three factories; generated types do not grant permissions.
 
 ## Transaction strategy and layer ownership
 
@@ -94,6 +116,6 @@ Auth creation and profile SQL are not one distributed transaction. The simple co
 
 **DESIGN DECISION (implementation detail under approved UD-012/UD-023):** User-scoped server Supabase clients perform RLS-protected reads. Deny anon/authenticated raw production/profile mutations and privileged command EXECUTE. Backend elevated commands check current actor/role/creator/state because service-role bypasses RLS.
 
-If elevated helpers are needed, use private unexposed schema, least-privilege owner, qualified names, pinned search_path, restricted grants; an exposed invoker gateway is backend-credential-only. Concrete grants are reviewed/implemented at G03 without reopening UD-012. No browser path may call the privileged mutation gateway.
+If elevated helpers are needed, use private unexposed schema, least-privilege owner, qualified names, pinned search_path, restricted grants; a future exposed invoker gateway is backend-credential-only. G03 implements safe default-deny grants; there is no mutation gateway yet. Later workflow goals introduce reviewed command grants without reopening UD-012. No browser path may call future privileged entry points.
 
 Application SYSTEM_ADMIN is not infrastructure service_role. Application immutability does not protect against a database owner deliberately editing storage; operational recovery is outside normal UI authority.

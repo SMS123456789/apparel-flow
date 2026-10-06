@@ -8,6 +8,8 @@
 
 ## Identity and session
 
+G03 is a database-only foundation: all ten application tables have RLS enabled with no policies. PUBLIC/anon/authenticated table access is revoked; service_role is read-only. No production RPC exists and API roles cannot execute private trigger helpers or use the private numbering sequence. Database role values use the lowercase assessment identifiers plus system_admin; future API/application identifiers retain their documented uppercase representation. No Auth users/profiles are seeded, no signup/login/refresh/role guard is implemented, and cloud Auth settings remain future authentication work.
+
 **DESIGN DECISION (approved UD-015/UD-025):** Supabase email/password authentication with cookie-based SSR session, real distinct demo accounts, public signup disabled. auth.users is authentication authority; public.profiles holds protected current role/activity/name. One role/user; no authority from editable user metadata or browser role switches.
 
 Controller validates Auth identity with the supported server client and then current profile. Do not authorize using a locally read getSession user object. Server-confirmed getUser or verified token identity is distinct from a fresh role lookup. [Supabase server Auth guidance](https://supabase.com/docs/guides/auth/server-side/creating-a-client).
@@ -34,7 +36,7 @@ Keep server command/Auth-admin clients isolated in server-only adapters; secret 
 
 **DESIGN DECISION (approved UD-009):** One factory, no tenancy and no creator-owned visibility filters. Current role determines records. Creator identity remains solely for attribution and self-verification prevention.
 
-The following read policies/grants are implementation details of that role contract. All anon application access denied; raw authenticated application writes denied.
+The following read policies/grants are future implementation details of that role contract, not active G03 policies. G03 denies ordinary reads as well as writes until reviewed authentication/RBAC migrations introduce scoped access. All anon application access remains denied; raw authenticated application writes remain denied.
 
 | Resource | Supervisor SELECT | Verifier SELECT | Sewing SELECT | Admin SELECT | Raw user mutations |
 |---|---|---|---|---|---|
@@ -54,7 +56,7 @@ Every child-row lookup inherits parent restrictions. Own-created order read acce
 
 **DESIGN DECISION (approved UD-010/UD-012):** Every count/approve/reject command verifies current CUTTING_VERIFIER and actor != cutting_orders.created_by even after reassignment. Controller/service enforce it, and locked RPC rechecks it. Wrong role or creator -> 403; hard stop -> 422; state/revision conflict -> 409.
 
-Browser JWTs cannot execute privileged commands. Concrete backend-only gateway/helper grants are implemented/reviewed at G03. If a definer helper is required, keep it private/unexposed with pinned search_path, qualified relations, controlled owner/EXECUTE; expose only a backend-credential invoker entry. [Supabase function security](https://supabase.com/docs/guides/database/functions).
+Browser JWTs cannot execute privileged commands. G03 implements default-deny grants and invoker-only private trigger helpers; no backend mutation gateway/approval RPC exists yet. Later workflow migrations review any command/helper grants. If a definer helper is required then, keep it private/unexposed with pinned search_path, qualified relations, controlled owner/EXECUTE; expose only a backend-credential invoker entry. [Supabase function security](https://supabase.com/docs/guides/database/functions).
 
 Internal actor_id is derived by trusted controller; only backend can supply it. A service-role request does not magically carry a user's auth.uid. The command must read protected active role and reject forged/inappropriate internal actors.
 

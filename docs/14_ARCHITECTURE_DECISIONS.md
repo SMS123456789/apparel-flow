@@ -2,7 +2,7 @@
 
 Classification follows [00](00_PROJECT_CHARTER.md). Assessment source: the supplied six-page Webtezza challenge, sections 1-16. User sources: the original G00 request and the subsequent decision-approval table. External references validate feasibility, not add manufacturing requirements.
 
-**Approval recorded:** 2026-10-06, Asia/Colombo, by the user in this conversation. The decision table approved 25 directions; the subsequent admin-creation clarification approves UD-022. All 26 decisions are now approved and removed from UNRESOLVED_DECISIONS. G00 documentation/Git work and G01 scaffolding are complete. The subsequent explicit G02 request authorizes merging G01 and Supabase infrastructure on a separate branch; it stops before G03.
+**Approval recorded:** 2026-10-06, Asia/Colombo, by the user in this conversation. All 26 UD directions are approved. G00/G01/G02 are committed and merged. The subsequent explicit G03 request authorizes database migrations, exact recipe seeds, remote application, generated types, and verification on a new branch; it stops before G04 and application features.
 
 ## Captured architecture decisions
 
@@ -104,7 +104,7 @@ Approved Next.js/TypeScript/Supabase/Vercel fits the permitted assessment stack.
 
 ## UNRESOLVED_DECISIONS
 
-None. All 26 historical decisions have approved directions recorded above. G01/G02 package versions are selected/pinned below, and the assessment schedule is not an architecture blocker. G02 infrastructure is currently authorized; G03 and later implementation still require their separately requested milestones.
+None. All 26 historical decisions remain approved. G01/G02 packages are pinned, and scheduling is not an architecture blocker. G03 database work is now explicitly authorized; G04 and later implementation still need their separately requested milestones.
 
 ## G00 completion record
 
@@ -199,4 +199,49 @@ Verified locally on 2026-10-06 using Node 22.23.2/npm 10.9.8. Infrastructure uni
 | npm audit --omit=dev; full audit | Production audit passed with zero vulnerabilities. Full audit still reports nine high development-tooling findings inherited from G01; not claimed clean. |
 | Scope/docs/Git | README and all fifteen numbered documents have valid local links/anchors. No business calls/APIs/tables, auth feature/proxy, fake sessions/roles, generated Database type, or placeholder migrations. git diff --check passed. |
 
-G02 changes comprise eleven new infrastructure/config/test files and ten modified template/package/test/documentation files, suitable for one focused commit. The ignored local .env update is excluded from Git. G02 remains uncommitted on chore/g02-supabase-foundation; the request to create/merge the previous G01 PR has been completed separately. No required checks remain failed and no G02 blockers remain. **G02 COMPLETE — READY FOR G03**, stopping before schema/auth/business implementation.
+At the end of the original G02 turn, eleven new files and ten modified files remained uncommitted. The ignored .env update was excluded. All required checks passed: **G02 COMPLETE — READY FOR G03**, stopping before schema/auth/business implementation. The user's subsequent merge request authorized commit fff5167 and [PR #2](https://github.com/SMS123456789/apparel-flow/pull/2), merged into main as 0ec487941f3e16bd44fb888c4bc164b1f281d1e9 before G03.
+
+## G03 database foundation decisions
+
+**DESIGN DECISION (implementation detail under the explicit G03 request):** Work is on feat/g03-database-schema, based on the G02 merge. G03 includes the assessment seeds originally listed separately at G04 in the roadmap. Its request permits stronger documented equivalents, so order_components, OPEN attempts, separate immutable verification_log_items, and sewing start fields on cutting_orders are preserved. No business decision, role, production status, or approval gate was changed.
+
+| ID | Actual schema/tooling decision and rationale |
+|---|---|
+| ADR-029 | Three version-controlled migrations: 20261006153000_apparelflow_domain_schema, 20261006153100_assessment_recipes, and forward 20261006155500_rejection_reason_whitespace. All applied through Supabase CLI --db-url after isolated validation and remote dry-run. Existing configured database password passed only via PGPASSWORD; no Management API token/login, Dashboard DDL, history repair, or shared reset needed. Cloud is PostgreSQL 17.11; local config already uses major 17. |
+| ADR-030 | Ten tables, six enums, 21 restrictive FKs, 51 CHECK constraints, and 44 indexes. UUID identities preserve historical references; verification_log_items uses its documented natural UUID pair. Composite keys/FKs enforce source-recipe membership, same-order attempts/sign-offs, same-attempt count evidence, expected-count basis, and APPROVED log references. Private bounded sequence generates twelve-digit AF- numbers. No cascading evidence deletion or password hash. |
+| ADR-031 | Bounded numeric plus scale checks preserves the documented numeric(12,3)/(24,3)/(32,12) value/precision limits while rejecting excess input scale before PostgreSQL silently rounds it. This is a storage refinement under UD-001/UD-013, not a business-rule change. Count/revision bigint bounds stay within JavaScript safe integers. Signed generated component variance and signed fabric wastage remain representable; caps never gate approval. |
+| ADR-032 | Seven private invoker trigger helpers, empty search_path and qualified relations; 26 triggers enforce no deletes, immutable references/BOM/audit, first-submit recipe/target freeze, finalized attempt/count/sign-off protection, verified order facts, one-time sewing attribution, stable identities, and reusable mutable-row updated_at. New log/item evidence must be inserted while the attempt is OPEN before finalization in the future transaction. No approval/rejection/role/state-transition RPC was introduced. |
+| ADR-033 | RLS enabled on every application table, zero policies, no PUBLIC/anon/authenticated table privileges. service_role has SELECT only and no direct DML/TRUNCATE. Private schema/helpers/sequence are inaccessible to API roles. Role-based read policies and reviewed transactional commands are later milestones; ordinary access intentionally remains denied. |
+| ADR-034 | Deterministic idempotent migration supplies only REC-BL01/REC-CT02 and the exact ten components, with null images. Replay verifies the fixed catalog rather than overwriting mismatches. Recipes/components are read-only even for ordinary privileged updates. No cloud Auth users/profiles/orders/attempts/sign-offs/sewing/admin fixtures are created. |
+| ADR-035 | Supabase CLI generates src/types/database.generated.ts from the real public schema and automatically formats it with existing Prettier. Definitions are never hand-edited; all three factories bind Database. Generated helper definitions are excluded from authored-code ESLint rules but remain strict-typechecked and format-checked. Type generation writes atomically only after success/credential checks. PostgreSQL password tooling is separate from app client configuration. |
+| ADR-036 | Separate npm run test:db creates a disposable PostgreSQL 17 Docker container with no network/host ports, runs actual migrations, replays seeds, checks catalog/grants/RLS, and tests constraints/immutability with rollback-only fixtures. Minimal local Auth FK/role infrastructure is test-only, not application Auth or a mock claim of Supabase login correctness. Cloud verification is read-only. Existing Vitest/Playwright remain separate and unchanged in scope. |
+
+Current primary references: [PostgreSQL numeric coercion](https://www.postgresql.org/docs/17/datatype-numeric.html), [relational constraints](https://www.postgresql.org/docs/17/ddl-constraints.html), [Supabase database connections](https://supabase.com/docs/guides/database/connecting-to-postgres), and [CLI type generation](https://supabase.com/docs/guides/api/rest/generating-types). The CLI's supported flag help was also inspected. Docker's selected desktop context was unavailable, but the existing default Engine works; type generation uses DOCKER_HOST=unix:///var/run/docker.sock without changing the user's global context. The full local Supabase stack is not adopted.
+
+The first isolated catalog run exposed name[] versus text[] comparison in enum assertions; casting enum labels to text fixed the verification script. Migrations themselves applied cleanly to isolated PostgreSQL, seed replay passed, and the full isolated suite then passed. A later metadata-shape refinement was validated again before cloud application. Applied migrations are not edited after remote execution.
+
+Final review found that PostgreSQL's default btrim removes ordinary spaces only. A regression using a tab/newline-only rejection reason actually failed before the fix because the database accepted it. Forward migration 20261006155500 adds a CHECK matching the full ECMAScript String.trim whitespace set, preserving the approved trimmed 1–1000-character rule and the original migration history. The complete isolated suite passed with tab/newline, leading nonbreaking-space, and trailing byte-order-mark regressions. The forward migration was then applied through the reviewed CLI workflow; generated types were regenerated from cloud and their hash remained unchanged because this fix changes a constraint only.
+
+### G03 completion evidence
+
+Verified on 2026-10-06 with the existing Node 22.23.2/npm 10.9.8 and Supabase CLI 2.119.0 pins. SQL mutation tests run only in disposable PostgreSQL 17; cloud schema/history verification is read-only.
+
+| Check | Actual result |
+|---|---|
+| npm ci | Fresh install passed; 27 exact direct dependency pins and lockfile unchanged. Existing development-tooling audit/EOL limitations remain. |
+| npm run typecheck; npm run lint | Strict TypeScript and lint passed with no errors or warnings; all three Supabase factories use the generated Database type. |
+| npm run format:check | Passed all matched files, including generated types. Approved numbered-document formatting retained. |
+| npm test | Three Vitest files, 24 existing scaffold/infrastructure tests passed. |
+| npm run test:e2e | Production build and both desktop/mobile Chromium smoke tests passed; HTTP 200, no page errors or horizontal overflow; owned server stopped. |
+| npm run build | Separate production build passed; only home and not-found routes exist. |
+| npm run test:db | All three actual migrations, idempotent seed replay, catalog/grant/RLS checks, positive structural/history cases, and 56 expected-error assertions passed. Test fixtures rolled back; isolated container removed. The earlier assertion-type and whitespace regression failures are recorded above. |
+| CLI remote plan/push/list | All three versions applied and local/remote history matches exactly. Final dry-run reports no pending migrations. No Dashboard DDL, history repair, reset, or login workaround. |
+| npm run supabase:schema:verify | Cloud PostgreSQL 17.11: ten tables, six enums, 21 restrictive FKs, 51 CHECKs, 44 indexes (18 purposeful beyond PK/unique constraints), 26 triggers, and seven private invoker helpers. All ten tables have RLS and zero policies; API grants match default-deny design. |
+| npm run supabase:types | Supported CLI generated actual cloud public-schema types; automatic formatting and atomic replacement succeeded. Regeneration after the forward fix produced the same type-file hash. |
+| Seed/data verification | Exactly REC-BL01/REC-CT02, matching assessment values and five exact components each; all images null. Zero cloud Auth users/profiles/orders/attempts/verification logs/admin events. No production fixtures created. |
+| npm run supabase:check | Current Auth health and privileged REST metadata returned HTTP 200; read-only privileged Auth SDK call succeeded. No returned user/body data printed. |
+| Security audit | Private environment files ignored/untracked; example placeholders only. Real configured credentials absent from trackable files/Git diff and 92 generated JavaScript files; nine browser JavaScript files contain no server-secret-variable references. Server-only guards retained; no client business database calls, application APIs/Auth features, permissive policies, direct mutation grants, or workflow RPCs introduced. |
+| npm audit --omit=dev | Zero production vulnerabilities; nine high development-tooling findings inherited from G01 remain documented, not claimed clean. |
+| Scope/docs/Git | Actual ERD, tables/enums, index/trigger rationale, deletion/grant posture, scripts, seeds, and generated-type workflow documented. Local Markdown links/anchors and whitespace checks passed. Nine new G03 files and thirteen modified files remain uncommitted on feat/g03-database-schema. The separately added AGENTS.md and docs/15_UI_DESIGN_SYSTEM.md were preserved without edits. |
+
+No business-rule or architecture deviations and no blockers remain. Bounded numeric scale checks are the documented storage refinement needed to reject overprecision rather than round it. Stronger existing model equivalents are preserved within the explicit G03 request. No new dependency, feature UI, auth flow, role service, business API/service, or approve/reject RPC was added. No G03 commit, push, PR, merge, or G04 work has been performed. **G03 COMPLETE — READY FOR G04.**

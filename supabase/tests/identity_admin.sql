@@ -64,7 +64,7 @@ DO $$ BEGIN
   PERFORM pg_temp.expect_identity_error($q$SELECT public.admin_list_users('91000000-0000-4000-8000-000000000001')$q$,'42501');
   PERFORM pg_temp.expect_identity_error($q$UPDATE public.profiles SET role='system_admin'$q$,'42501');
   PERFORM pg_temp.expect_identity_error($q$SELECT * FROM public.admin_audit_events$q$,'42501');
-  PERFORM pg_temp.expect_identity_error($q$SELECT * FROM public.cutting_orders$q$,'42501');
+  ASSERT (SELECT count(*) FROM public.cutting_orders)=0, 'Supervisor reads only existing production rows';
 END $$;
 RESET ROLE;
 SELECT set_config('request.jwt.claim.sub','91000000-0000-4000-8000-000000000003',true);

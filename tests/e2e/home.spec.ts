@@ -20,7 +20,9 @@ test("login and real demo panel are visible without overflow", async ({
   await expect(page.getByLabel("Password (required)")).toBeVisible();
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
     ),
   ).toBe(true);
   expect(errors).toEqual([]);

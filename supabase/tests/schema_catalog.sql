@@ -8,7 +8,7 @@ DECLARE
 BEGIN
   ASSERT (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = ANY(tables) AND c.relkind = 'r') = 10, 'Required tables missing';
   ASSERT NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = ANY(tables) AND NOT c.relrowsecurity), 'RLS must be enabled on every application table';
-  ASSERT (SELECT count(*) FROM pg_policy p JOIN pg_class c ON c.oid=p.polrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public') = 1, 'Only own-active-profile read policy permitted';
+  ASSERT (SELECT count(*) FROM pg_policy p JOIN pg_class c ON c.oid=p.polrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public') = 9, 'Nine scoped identity/cutting read policies required';
   ASSERT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid='public.profiles'::regclass AND polname='profiles_own_active_read' AND polcmd='r' AND polroles=ARRAY['authenticated'::regrole::oid]), 'Scoped identity policy missing';
   ASSERT NOT EXISTS (SELECT 1 FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = ANY(tables) AND k.contype = 'f' AND k.confdeltype <> 'r'), 'Historical foreign keys must restrict deletion';
   ASSERT (SELECT count(*) FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = ANY(tables) AND k.contype = 'c') = 51, 'Structural CHECK constraints missing';
@@ -22,9 +22,9 @@ BEGIN
 
   FOREACH table_name IN ARRAY tables LOOP
     FOREACH actor_role IN ARRAY ARRAY['anon', 'authenticated'] LOOP
-      IF actor_role = 'authenticated' AND table_name = 'profiles' THEN
-        ASSERT has_table_privilege(actor_role, 'public.profiles', 'SELECT'), 'Own identity read grant missing';
-        ASSERT NOT has_table_privilege(actor_role, 'public.profiles', 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'), 'Raw identity mutations denied';
+      IF actor_role = 'authenticated' AND table_name <> 'admin_audit_events' THEN
+        ASSERT has_table_privilege(actor_role, 'public.' || table_name, 'SELECT'), 'Own identity read grant missing';
+        ASSERT NOT has_table_privilege(actor_role, 'public.' || table_name, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'), 'Raw identity mutations denied';
       ELSE
         ASSERT NOT has_table_privilege(actor_role, 'public.' || table_name, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'), 'Ordinary client privilege unexpectedly granted';
       END IF;
@@ -65,15 +65,17 @@ BEGIN
     LEFT JOIN public.recipe_components c ON c.recipe_id = r.id AND c.component_name = expected.component_name
     WHERE c.id IS NULL OR c.pieces_per_garment <> expected.pieces OR c.sort_order <> expected.position OR c.image_url IS NOT NULL
   ), 'Assessment BOM mismatch';
-  -- Real role checks are read-only; table grants deny before RLS is considered.
-  FOREACH actor_role IN ARRAY ARRAY['anon', 'authenticated'] LOOP
-    BEGIN
-      EXECUTE format('SET LOCAL ROLE %I', actor_role);
-      EXECUTE 'SELECT count(*) FROM public.recipes' INTO count_value;
-      RAISE EXCEPTION 'Ordinary role unexpectedly read reference data';
-    EXCEPTION WHEN insufficient_privilege THEN
-      NULL;
-    END;
-  END LOOP;
+  ASSERT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='apparelflow_production_owner' AND NOT rolcanlogin AND NOT rolsuper AND rolbypassrls AND NOT rolinherit), 'Restricted production command owner';
+  ASSERT NOT pg_has_role('service_role','apparelflow_production_owner','MEMBER') AND NOT pg_has_role('authenticated','apparelflow_production_owner','MEMBER'), 'API roles cannot inherit production owner';
+  ASSERT NOT has_table_privilege('apparelflow_production_owner','public.profiles','INSERT,DELETE') AND NOT has_column_privilege('apparelflow_production_owner','public.profiles','role','UPDATE'), 'Production owner cannot assign authority';
+  ASSERT NOT has_table_privilege('apparelflow_production_owner','public.admin_audit_events','SELECT,INSERT,UPDATE,DELETE'), 'Production owner cannot administer accounts';
+  ASSERT NOT has_function_privilege('service_role','app_private.production_assert_actor(uuid,public.app_role)','EXECUTE'), 'Production actor guard is internal';
+  ASSERT (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('cutting_create','cutting_edit','cutting_submit','cutting_recut') AND NOT p.prosecdef AND has_function_privilege('service_role',p.oid,'EXECUTE') AND NOT has_function_privilege('authenticated',p.oid,'EXECUTE') AND NOT has_function_privilege('anon',p.oid,'EXECUTE'))=4, 'Four backend cutting gateways required';
+  SET LOCAL ROLE anon;
+  BEGIN
+    SELECT count(*) INTO count_value FROM public.recipes;
+    RAISE EXCEPTION 'Anon unexpectedly read reference data';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  RESET ROLE;
 END;
 $$;

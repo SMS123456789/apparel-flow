@@ -3,12 +3,7 @@
 Cutting Operations & Gatekeeper Verification Terminal, implementing the
 [approved specification](docs/00_PROJECT_CHARTER.md).
 
-**Current stage: G04 Identity, Access & Admin.** G01–G03 are merged, most recently
-through [PR #3](https://github.com/SMS123456789/apparel-flow/pull/3), which includes
-the database foundation and [UI design contract](docs/15_UI_DESIGN_SYSTEM.md).
-G04 adds real authentication, protected role shells, evaluator accounts, and
-account administration. Manufacturing workflows begin in separately authorized
-G05–G07 chunks. No order/count/approval/sewing workflow is implemented here.
+**Current stage: G05 Cutting Supervisor Workflow.** G04 authentication/admin is merged through [PR #4](https://github.com/SMS123456789/apparel-flow/pull/4). Supervisor creation, preparation, frozen submission and same-order re-cut persistence are implemented. Verifier and sewing workflows follow in the authorized G06/G07 chunks. Deployment is manual user action after G08.
 
 ## Setup
 
@@ -101,10 +96,8 @@ changes use full navigation to discard previous account content.
 | PATCH `/api/admin/users/:id/status` | Activation/deactivation with expected revision and audit.                       |
 | GET `/api/admin/audit`              | Admin-only immutable account-event cursor list.                                 |
 
-`/admin` contains Users and Administrative audit. `/supervisor`, `/verifier`, and
-`/sewing` contain protected identity shells only. Wrong-role page navigation
-returns to the user's own area; wrong-role API requests return 403. No dashboard
-analytics, production records, verification terminal, or Sewing Queue exists.
+`/admin` contains Users and Administrative audit. `/supervisor` now contains the cutting workflow; `/verifier` and `/sewing` remain protected identity shells. Wrong-role page navigation
+returns to the user's own area; wrong-role API requests return 403. The supervisor workspace lists real factory cutting orders and prepares/submits batches. The verification terminal and Sewing Queue await G06/G07.
 The compact light UI follows [15](docs/15_UI_DESIGN_SYSTEM.md), with readable
 fields, semantic tables, native accessible dialogs, focus/error states, and
 responsive navigation. Temporary passwords clear after submission attempts.
@@ -136,7 +129,7 @@ call same-origin APIs, with no business database queries.
 
 ## Supabase migration workflow
 
-Cloud PostgreSQL **17.11** is the target; isolated tests use major 17. Five
+Cloud PostgreSQL **17.11** is the target; isolated tests use major 17. Six
 version-controlled SQL migrations establish G03 schema/recipes/whitespace guards
 and G04 identity/admin commands plus the private Auth ID/email projection.
 Applied SQL is immutable; fixes require forward migrations.
@@ -207,8 +200,7 @@ if system libraries are missing). E2E loads ignored real-account configuration,
 uses one worker to isolate shared demo accounts, owns port 3100, and overrides
 APP_ORIGIN only for its server. Auth traces are disabled to avoid credential/
 cookie artifacts. Role/status tests restore the original production profile in
-finally; they create no extra Auth accounts or manufacturing fixtures. Production
-workflow acceptance cases await G05–G07.
+finally; they create no extra Auth accounts or manufacturing fixtures. Cutting browser tests persist identifiable E2E-CUTTING batches in the configured assessment database; immutable records are retained. Verification/sewing acceptance follows G06/G07.
 
 `test:db` never loads cloud environment files. Its network-isolated container has
 no host ports, simulates the restricted cloud operator/managed Auth namespace,
@@ -222,3 +214,9 @@ findings inherited from G01 and ESLint 9 EOL remain documented in
 [architecture decisions](docs/14_ARCHITECTURE_DECISIONS.md). No new dependencies
 or forced downgrades were introduced. Detailed contracts, roadmap, failure/fix
 history, and actual completion evidence are in [docs](docs/).
+
+## Cutting workflow (G05)
+
+CUTTING_SUPERVISOR alone can GET/POST /api/orders, read/edit /api/orders/:id and invoke named /submit or /recut commands. GET /api/recipes permits both cutting roles. Create saves CUTTING_IN_PROGRESS; Submit changes to PENDING_VERIFICATION and atomically freezes the full BOM/recipe/target plus a new uncounted verification attempt. Recipe/target stay frozen during re-cut, while replacement roll/fabric can be saved. Previous finalized attempts and evidence remain permanent. Server calculations derive target × pieces/garment and exact target × standard yards; client identity/status/expected fields are rejected.
+
+G05 introduces eight scoped production/reference SELECT policies in addition to own-active-profile RLS. User JWTs supply reads; a separate restricted NOLOGIN command owner supplies four backend-only invoker gateways. Direct writes and user command execution remain denied. All writes lock/recheck the active actor and order and use current revisions. Isolated SQL tests cover command authorization, re-cut and injected submission rollback; browser tests cover real creation/edit/submit/reload.

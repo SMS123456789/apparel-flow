@@ -47,7 +47,9 @@ test("responsive layouts, measured control contrast and keyboard dialogs", async
     ).toBeVisible();
     expect(
       await page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth,
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
       ),
     ).toBe(true);
     if (width === 1280 || width === 375)
@@ -113,7 +115,9 @@ test("responsive layouts, measured control contrast and keyboard dialogs", async
     await page.setViewportSize({ width, height: 900 });
     expect(
       await page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth,
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
       ),
     ).toBe(true);
     await expect(

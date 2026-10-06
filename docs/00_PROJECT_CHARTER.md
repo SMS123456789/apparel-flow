@@ -1,6 +1,6 @@
 # 00 - Project charter
 
-**Status:** G00 documentation and G01/G02/G03 are merged into main. G04 identity, access and admin work is on feat/g04-identity-admin; see current validation evidence in document 14. Manufacturing workflows remain G05–G07.
+**Status:** G00–G04 are merged into main. G05 supervisor workflow is implemented on feat/g05-supervisor-workflow and completing final regression checks. The continuation authorizes G06–G08 sequentially; production deployment remains manual user action.
 **Reviewed/approved:** 2026-10-06, Asia/Colombo.
 **Sources:** *ApparelFlow ERP - Software Engineering Practical Challenge*, Webtezza (Pvt) Ltd, all six pages/sections 1-16; original G00 request; user's decision-approval table; subsequent synchronous admin-creation clarification.
 

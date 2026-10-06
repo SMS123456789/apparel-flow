@@ -23,7 +23,7 @@ Implementation list defaults: limit 20/max 100, opaque cursor, allowlisted searc
 
 No application signup route. The previous planned /api/session is superseded by /api/auth/me. No acting identity/role/activity fields are accepted in login/demo. Malformed JSON/content type returns 400, schema violations 422, credentials 401, missing/inactive profile 403, dependency failures 503. Every result carries meta.requestId and private,no-store headers; all mutations require the exact APP_ORIGIN.
 
-## Planned recipe and order routes (G05)
+## Implemented recipe and order routes (G05)
 
 S = CUTTING_SUPERVISOR, V = CUTTING_VERIFIER, W = SEWING_SUPERVISOR, A = SYSTEM_ADMIN. Scope is factory-wide by role, never creator-owned.
 
@@ -94,7 +94,7 @@ Numeric storage/input conventions are [06](06_DATABASE_DESIGN.md). HTML clients 
 
 ## Example payloads
 
-Order/count/hard-stop examples below describe the future manufacturing contract, not G04 endpoints.
+Order examples are implemented in G05; count/hard-stop examples describe G06.
 
 Order request:
 
@@ -170,3 +170,5 @@ Invalid method -> 405. No elaborate MVP RateLimitError subsystem. Guards precede
 ## Retry and uncertainty
 
 Decision commands require current revision; on 409 refetch. After timeout, inspect committed order state before retrying decisions. Admin creation is synchronous; never blindly retry if an Auth/profile outcome is uncertain. Check whether the new user/profile already exists before cleanup or recreation; do not delete a valid existing account. No idempotency ledger/background reconciliation system is required.
+
+G05 order lists accept only status/search/limit/cursor. Search is a literal order-number substring; cursors preserve createdAt/id descending order. Detail returns recipe/BOM, preparation values, frozen components, attempt history and finalized evidence. Create returns 201; preparation edits/submit/recut return the committed detail. Public JSON input never accepts actor/state/derived counts/time.

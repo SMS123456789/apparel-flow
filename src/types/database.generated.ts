@@ -630,6 +630,36 @@ export type Database = {
         };
         Returns: Json;
       };
+      cutting_create: {
+        Args: {
+          p_actor_id: string;
+          p_actual_fabric: number;
+          p_fabric_roll_id: string;
+          p_recipe_id: string;
+          p_target_qty: number;
+        };
+        Returns: string;
+      };
+      cutting_edit: {
+        Args: {
+          p_actor_id: string;
+          p_actual_fabric?: number;
+          p_fabric_roll_id?: string;
+          p_order_id: string;
+          p_recipe_id?: string;
+          p_revision: number;
+          p_target_qty?: number;
+        };
+        Returns: string;
+      };
+      cutting_recut: {
+        Args: { p_actor_id: string; p_order_id: string; p_revision: number };
+        Returns: string;
+      };
+      cutting_submit: {
+        Args: { p_actor_id: string; p_order_id: string; p_revision: number };
+        Returns: string;
+      };
     };
     Enums: {
       admin_audit_action:

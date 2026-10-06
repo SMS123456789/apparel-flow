@@ -127,3 +127,8 @@ Auth creation and profile SQL are not one distributed transaction. The simple co
 If elevated helpers are needed, use private unexposed schema, least-privilege owner, qualified names, pinned search_path, restricted grants; a future exposed invoker gateway is backend-credential-only. G03 established safe default-deny grants. G04 introduces only the four admin gateways described below; no manufacturing gateway exists. Later workflow goals introduce reviewed command grants without reopening UD-012. No browser path may call future privileged entry points.
 
 Application SYSTEM_ADMIN is not infrastructure service_role. Application immutability does not protect against a database owner deliberately editing storage; operational recovery is outside normal UI authority.
+
+
+## G05 cutting access and commands
+
+Migration 20261006180000 implements the create/edit/submit/recut atomic sets above. Eight authenticated SELECT policies scope catalog to active cutting roles and order/child data to active supervisors. User-context repositories use these policies. Four service-only public invoker gateways call private locked commands owned by apparelflow_production_owner, a separate NOLOGIN/NOINHERIT owner with no Auth/admin-audit or profile-role/activity privilege. UPDATE(id) on profiles and attempts is solely for row locks; existing identity/history triggers prevent changes. Direct API DML stays denied. First submit freezes exact complete BOM and derives quantities; subsequent submission reuses the frozen manifest and first-attempt standard/cap. SQL fixtures prove real submission rollback and re-cut history preservation.

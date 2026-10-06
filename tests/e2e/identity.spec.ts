@@ -331,7 +331,12 @@ test("real admin updates immediately change profile authority and append audit",
       `${rest}/cutting_orders?select=id`,
       { headers: publicHeaders },
     );
-    expect(rawProduction.status()).toBe(403);
+    expect(rawProduction.status()).toBe(200);
+    const rawWrite = await production.request.patch(
+      `${rest}/cutting_orders?id=eq.00000000-0000-4000-8000-000000000000`,
+      { headers: publicHeaders, data: { status: "VERIFIED" } },
+    );
+    expect(rawWrite.status()).toBe(403);
     expect(
       (
         await change(

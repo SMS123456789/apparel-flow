@@ -1,0 +1,60 @@
+# 10 - Administrative panel specification
+
+**APPROVED EXTENSION:** SYSTEM_ADMIN views/creates production users, changes production roles, activates/deactivates, reviews administrative audit. No manufacturing, impersonation, force-state, or sewing injection.
+
+**DESIGN DECISION (approved UD-011/UD-022):** First admin manually bootstrapped through Supabase. Normal UI/API cannot create/promote another SYSTEM_ADMIN, self-deactivate/self-demote, or self-assign production. User creation is synchronous Auth create -> profile create, with cleanup attempt on profile failure; no invitation/async provisioning system is required initially.
+
+## Screens
+
+| Screen | Content | Controls |
+|---|---|---|
+| Users | Name/email/current role/active state/timestamps; safe search/filter/pagination. | Create User; production-role change; activate/deactivate. |
+| Create User | Email, full name, production role, temporary password. | Submit once; show validation/success/sanitized failure. |
+| Administrative audit | Actor/target/action/safe before-after role/activity/time/outcome/request ID. | Read-only search. |
+
+No order/count/recipe/sewing/override/impersonation navigation. Browser never invokes Supabase Admin API or stores elevated secrets.
+
+## Approved creation flow
+
+```text
+SYSTEM_ADMIN
+  -> email + full name + production role + temporary password
+  -> POST /api/admin/users
+  -> AdminUserController
+  -> AdminUserService
+  -> server Supabase Admin API creates Auth user
+  -> public.profiles row created
+  -> 201 with safe user data
+```
+
+Controller authenticates current admin, applies origin guard, validates strict fields, and calls service. Service checks allowed production role and uses server Auth adapter/repositories. Admin APIs never accept acting-user identity or arbitrary admin promotion.
+
+Temporary password satisfies configured Supabase password policy. Keep it only as the in-memory creation input/secure Auth request; no profile column, audit/log field, URL, response echo, or duplicate password hash. Creation UI clears password after submission completion; avoid persisting it in client storage.
+
+Successful public.profiles row uses returned Auth ID, full name, one production role, active state, server timestamps. Insert profile and creation-audit event in one PostgreSQL transaction. Return success only after persistence succeeds. No email-invite flow or mandatory first-login-reset workflow is silently added.
+
+## Failure and cleanup contract
+
+**DESIGN DECISION (approved UD-022):**
+
+1. If Auth creation fails, do not create a profile; return mapped error. Duplicate email -> 409; invalid password/input -> 422; dependency failure -> sanitized 503/500.
+2. If profile/audit persistence fails after a new Auth user was created, roll back SQL, attempt cleanup through the trusted Supabase Admin API using only that new Auth ID, and return an error.
+3. Cleanup success still returns profile-creation failure, not 201. Cleanup failure also returns error and records sanitized server diagnostics for operator reconciliation.
+4. An incomplete Auth user with no active profile cannot access application APIs or RLS-protected data, even if Auth sign-in succeeds.
+5. Never remove an existing user after a duplicate-email failure, and never delete an established profile/order/audit as compensation. If persistence outcome is uncertain, check the new profile before attempting deletion so a committed user is not accidentally removed.
+
+Profile failure/cleanup failure use sanitized 500 codes such as PROFILE_CREATION_FAILED or USER_CLEANUP_FAILED. No secret/temporary password/raw provider exception is exposed. This best-effort rollback of incomplete creation is the approved narrow exception to UD-014's no hard deletion for established records.
+
+No durable admin_operations table, background worker, 202/polling/retry endpoint, or elaborate invitation recovery is needed for this scope.
+
+## Roles, activation, and audit
+
+One current role in protected public.profiles is reloaded by guards each request. Role/activity changes lock current actor/target, apply self guards, update target/revision, and append immutable audit atomically. Creator IDs remain historical; reassignment never permits verifying an own-created order.
+
+Deactivation commits is_active=false with audit; subsequent application/RLS access denies even with an existing JWT. Any supported Auth disabling is separate server administration; it is not a replacement for the active-profile check. Reactivation uses an existing valid Auth identity. Established users are deactivated, not hard-deleted.
+
+Audit stores server actor/time, target, action, safe old/new role/activity and outcome. No passwords/tokens/keys/production payload. Creation failure may use sanitized operational logs if DB is unavailable; never fabricate a successful audit event.
+
+## Acceptance
+
+Non-admin -> 403 for admin reads/mutations. Admin -> 403 for all production commands. Self-deactivation/demotion/production-role assignment and SYSTEM_ADMIN creation/promotion through normal API fail. Auth creation failure leaves no new profile; profile failure attempts new-Auth cleanup and returns error; cleanup failure grants no application access. Successful creation is synchronous 201 with safe user data. Admin remains secondary to core assessment work.

@@ -1,12 +1,12 @@
 # 13 - Gated implementation roadmap
 
-**DESIGN DECISION (approved by user):** G00 ends at documentation. The following is a plan, not authorization to scaffold, install, migrate, seed, provision, or deploy.
+**DESIGN DECISION (approved by user):** G00 ended at documentation and authorized local Git work. The subsequent explicit G01 request authorizes scaffolding on a new branch. Later goals remain a plan, not authorization to migrate, seed, provision, or deploy.
 
 ## G00 exit and implementation entry
 
 G00 output is all fifteen documents, traceable assessment rules, approved architecture/interpretations, all 26 approved UD directions, an empty [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) register, and the authorized initial branch commit/local main merge.
 
-**DESIGN DECISION (approved by user):** Decisions are approved. Package selection/pinning happens in G01 and does not block architecture; schedule is not an architecture blocker. A separate explicit G01 instruction is still needed before scaffolding. No approved item remains gated by the earlier proposal register.
+**DESIGN DECISION (approved by user):** Decisions are approved; schedule is not an architecture blocker. The separate explicit G01 instruction has now been received. Compatible package versions/configuration are recorded in [14](14_ARCHITECTURE_DECISIONS.md#g01-scaffold-decisions). No approved item remains gated by the earlier proposal register. G01 stops before G02.
 
 ## Future goals and acceptance gates
 
@@ -15,7 +15,7 @@ Goal numbering preserves identifiers, not mandatory execution priority. Admin G0
 | Goal | Work | Exit evidence/dependencies |
 |---|---|---|
 | G00 | Requirements/architecture docs | Documentation review complete; no implementation. |
-| G01 | Next.js/TypeScript repository scaffold | Choose/pin compatible exact versions during G01; layer directories only after G01 authorization. |
+| G01 | Next.js/TypeScript repository scaffold | Complete on chore/g01-nextjs-scaffold; exact versions pinned. Install/typecheck/lint/format/unit/E2E/build/boot checks passed; evidence in 14. Future directories documented without placeholders. G02 not started. |
 | G02 | Supabase local/cloud configuration | Configure implementation environments/Auth URLs/secrets safely; no accidental shared demo/production data. |
 | G03 | Reviewed database migrations | Implement/review schema/FKs/grants/RLS/RPC within approved identity/transaction direction before execution. |
 | G04 | Exact recipe seeds | Both five-component assessment BOMs; repeatable seeds, no invented images. |

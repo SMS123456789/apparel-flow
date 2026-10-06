@@ -132,3 +132,25 @@ Application SYSTEM_ADMIN is not infrastructure service_role. Application immutab
 ## G05 cutting access and commands
 
 Migration 20261006180000 implements the create/edit/submit/recut atomic sets above. Eight authenticated SELECT policies scope catalog to active cutting roles and order/child data to active supervisors. User-context repositories use these policies. Four service-only public invoker gateways call private locked commands owned by apparelflow_production_owner, a separate NOLOGIN/NOINHERIT owner with no Auth/admin-audit or profile-role/activity privilege. UPDATE(id) on profiles and attempts is solely for row locks; existing identity/history triggers prevent changes. Direct API DML stays denied. First submit freezes exact complete BOM and derives quantities; subsequent submission reuses the frozen manifest and first-attempt standard/cap. SQL fixtures prove real submission rollback and re-cut history preservation.
+
+## G06–G07 final workflow access
+
+The verification migration adds three named save/approve/reject invoker gateways
+and restricted private commands. The sewing migration adds one named start
+command; all eight production gateways are service_role-only. The nine total
+SELECT policies comprise own-active identity, two cutting reference policies and
+six production/child policies. Sewing receives VERIFIED orders and only their
+approved attempts/counts/logs/items, never prior rejected attempts or catalog
+rows. The two public views use security_invoker=true; verification_evidence
+preserves decimal text, and sewing_batches independently fixes VERIFIED, approved
+links and active Sewing scope. There is no browser DML or privileged RPC grant.
+
+Submitted attempts freeze recipe code/name labels as well as the original
+fabric/target basis. A trigger supplies first-attempt labels on re-cut. G07
+backfills only the newly added label columns from immutable seeded references,
+then protects them through the existing attempt-history trigger. Schema totals:
+ten tables, six enums, 21 restrictive foreign keys, 53 CHECKs, 44 indexes, 27
+triggers, nine scoped SELECT policies, four admin and eight production gateways.
+All eight forward migrations are applied to the assessment Supabase database and
+CLI-generated types match it. Real isolated sessions prove atomic decisions,
+rollback, creator guards, full child isolation and concurrent once-only starts.

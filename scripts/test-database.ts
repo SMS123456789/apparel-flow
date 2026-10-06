@@ -87,16 +87,26 @@ async function verificationRaces() {
   );
   const actorA = "'96000000-0000-4000-8000-000000000002'",
     actorB = "'96000000-0000-4000-8000-000000000003'";
-  for (const name of ["dual-approve", "count-approve", "reject-approve"]) {
+  for (const name of [
+    "dual-approve",
+    "count-approve",
+    "reject-approve",
+    "dual-start",
+  ]) {
     const batch = `(SELECT id FROM public.isolated_race_orders WHERE name='${name}')`,
       attempt = `(SELECT attempt FROM public.isolated_race_orders WHERE name='${name}')`;
-    const approve = `SELECT public.verification_approve(${actorA},${batch},${attempt},2)`;
+    const approve =
+      name === "dual-start"
+        ? `SELECT public.sewing_start('96000000-0000-4000-8000-000000000004',${batch},3)`
+        : `SELECT public.verification_approve(${actorA},${batch},${attempt},2)`;
     const other =
-      name === "dual-approve"
-        ? `SELECT public.verification_approve(${actorB},${batch},${attempt},2)`
-        : name === "reject-approve"
-          ? `SELECT public.verification_reject(${actorB},${batch},${attempt},2,'Physical defect')`
-          : `SELECT public.verification_save(${actorB},${batch},${attempt},2,'[{"componentId":"20000000-0000-4000-8000-000000000001","actualQty":0}]'::jsonb)`;
+      name === "dual-start"
+        ? `SELECT public.sewing_start('96000000-0000-4000-8000-000000000005',${batch},3)`
+        : name === "dual-approve"
+          ? `SELECT public.verification_approve(${actorB},${batch},${attempt},2)`
+          : name === "reject-approve"
+            ? `SELECT public.verification_reject(${actorB},${batch},${attempt},2,'Physical defect')`
+            : `SELECT public.verification_save(${actorB},${batch},${attempt},2,'[{"componentId":"20000000-0000-4000-8000-000000000001","actualQty":0}]'::jsonb)`;
     const results = await Promise.all([
       concurrentSql(approve),
       concurrentSql(other),
@@ -191,6 +201,10 @@ try {
   sql(readFileSync("supabase/tests/verification_gatekeeper.sql", "utf8"));
   console.log(
     "PASS verification GREEN/YELLOW, hard stops, reasons, identity, immutable re-cut evidence and decision rollback",
+  );
+  sql(readFileSync("supabase/tests/sewing_workflow.sql", "utf8"));
+  console.log(
+    "PASS VERIFIED-only sewing/child RLS, frozen labels, role guards and immutable once-only start",
   );
   await verificationRaces();
 } catch (error) {

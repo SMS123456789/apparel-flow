@@ -115,6 +115,14 @@ test("verifier persists zero, rejects shortage, recounts re-cut and signs immuta
   ).data as OrderDetail;
   expect(rejected.evidence[0]!.items[0]!.actualQty).toBe(0);
   expect(rejected.evidence[0]!.wastagePct).toBe("-10.000000000000");
+  await persona(page, context, "SEWING_SUPERVISOR", "/sewing");
+  expect((await context.request.get(`/api/sewing/${order.id}`)).status()).toBe(
+    404,
+  );
+  const hidden = await context.request.get(
+    `/api/sewing/queue?search=${order.orderNo}`,
+  );
+  expect((await hidden.json()).data.items).toEqual([]);
   await persona(page, context, "CUTTING_SUPERVISOR", `/supervisor/${order.id}`);
   await expect(
     page.getByRole("heading", { name: "Re-cut required", exact: true }),
@@ -197,4 +205,34 @@ test("verifier persists zero, rejects shortage, recounts re-cut and signs immuta
       })
     ).status(),
   ).toBe(409);
+  await persona(page, context, "SEWING_SUPERVISOR", "/sewing");
+  await page.getByLabel("Search order number").fill(order.orderNo);
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page
+    .getByRole("link", { name: `Open batch ${order.orderNo}`, exact: true })
+    .click();
+  await expect(
+    page.getByText("Reason: Front panel missing; re-cut required.", {
+      exact: true,
+    }),
+  ).not.toBeVisible();
+  const ready = (
+    await (await context.request.get(`/api/sewing/${order.id}`)).json()
+  ).data;
+  expect(ready.evidence.decision).toBe("APPROVED");
+  expect(ready.evidence.id).toBe(order.approvedLogId);
+  expect(ready).not.toHaveProperty("attempts");
+  await page
+    .getByRole("button", { name: "Start Sewing Assembly", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Confirm assembly start", exact: true })
+    .click();
+  await expect(
+    page.getByText("Sewing assembly started.", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByText("Sewing assembly started.", { exact: true }),
+  ).toBeVisible();
 });

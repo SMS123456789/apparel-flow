@@ -113,7 +113,9 @@ describe("verifier service", () => {
   it.each(["GREEN", "YELLOW"] as const)(
     "permits saved %s counts, including fabric above cap",
     async (color) => {
-      const { service, commands } = setup(pending(color));
+      const data = pending(color);
+      data.attempts[0]!.actualFabricYards = "100"; // 11.111...% against a 5% cap.
+      const { service, commands } = setup(data);
       await service.approve(verifier, order.id, decision);
       expect(commands.approve).toHaveBeenCalledWith(
         verifier.id,
@@ -125,7 +127,9 @@ describe("verifier service", () => {
   it.each(["RED", null] as const)(
     "blocks %s with 422 before command",
     async (color) => {
-      const { service, commands } = setup(pending(color));
+      const data = pending(color);
+      data.attempts[0]!.actualFabricYards = "100"; // 11.111...% against a 5% cap.
+      const { service, commands } = setup(data);
       await expect(
         service.approve(verifier, order.id, decision),
       ).rejects.toMatchObject({ status: 422, code: "APPROVAL_BLOCKED" });

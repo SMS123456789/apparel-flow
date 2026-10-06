@@ -39,7 +39,7 @@ S = CUTTING_SUPERVISOR, V = CUTTING_VERIFIER, W = SEWING_SUPERVISOR, A = SYSTEM_
 
 No generic order status setter, DELETE, recipe editor, or admin production route.
 
-## Planned verification and sewing routes (G06–G07)
+## Implemented verification and sewing routes (G06–G07)
 
 V may read role-permitted factory verification history; for every count/approve/reject mutation V must not be order creator.
 
@@ -94,7 +94,7 @@ Numeric storage/input conventions are [06](06_DATABASE_DESIGN.md). HTML clients 
 
 ## Example payloads
 
-Order examples are implemented in G05; count/hard-stop examples describe G06.
+Order, count, decision and sewing commands are implemented in G05–G07.
 
 Order request:
 

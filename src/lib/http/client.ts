@@ -1,9 +1,11 @@
 "use client";
+import type { GateViolation } from "@/modules/verification/rules";
 export class ApiClientError extends Error {
   constructor(
     message: string,
     public readonly status: number,
     public readonly fieldErrors: Record<string, string[]> = {},
+    public readonly violations: GateViolation[] = [],
   ) {
     super(message);
   }
@@ -25,13 +27,18 @@ export async function api<T>(
   });
   const result = (await response.json()) as {
     data?: T;
-    error?: { message: string; fieldErrors?: Record<string, string[]> };
+    error?: {
+      message: string;
+      fieldErrors?: Record<string, string[]>;
+      violations?: GateViolation[];
+    };
   };
   if (!response.ok || result.error)
     throw new ApiClientError(
       result.error?.message ?? "The request could not be completed.",
       response.status,
       result.error?.fieldErrors,
+      result.error?.violations,
     );
   return result.data as T;
 }

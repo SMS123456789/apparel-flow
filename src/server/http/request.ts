@@ -98,6 +98,9 @@ export async function apiResponse(
           message: known
             ? error.message
             : "An unexpected server error occurred.",
+          ...(known && error.violations
+            ? { violations: error.violations }
+            : {}),
           ...(known && error.fieldErrors
             ? { fieldErrors: error.fieldErrors }
             : {}),

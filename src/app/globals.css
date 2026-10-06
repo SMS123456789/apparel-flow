@@ -583,3 +583,58 @@ dialog .actions {
 .preparation-form {
   width: 100%;
 }
+
+:root {
+  --af-match-text: #166534;
+  --af-match-bg: #f0fdf4;
+  --af-match-border: #15803d;
+  --af-excess-text: #854d0e;
+  --af-excess-bg: #fffbeb;
+  --af-excess-border: #a16207;
+  --af-verifier-input-height: 40px;
+  --af-table-entry-row-height: 48px;
+}
+.component-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--af-space-1);
+  color: var(--af-text-secondary);
+}
+.component-status.match {
+  color: var(--af-match-text);
+}
+.component-status.excess {
+  color: var(--af-excess-text);
+}
+.component-status.shortage {
+  color: var(--af-shortage-text);
+}
+.count-table th[scope="row"] {
+  background: var(--af-surface);
+  font-weight: 400;
+}
+.count-input {
+  font-size: 16px;
+  min-height: var(--af-verifier-input-height);
+  width: 100%;
+  min-width: 170px;
+  font-variant-numeric: tabular-nums;
+}
+.count-table td:nth-child(3) {
+  width: 240px;
+}
+.decision-actions {
+  margin-top: var(--af-space-6);
+  display: grid;
+  gap: var(--af-space-3);
+}
+.reject-entry {
+  color: var(--af-shortage-text);
+  border-color: var(--af-shortage-border);
+}
+@media (max-width: 480px), (pointer: coarse) {
+  .count-input,
+  textarea {
+    min-height: var(--af-touch-control-height);
+  }
+}

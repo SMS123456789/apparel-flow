@@ -1,9 +1,11 @@
+import type { GateViolation } from "@/modules/verification/rules";
 export class AppError extends Error {
   constructor(
     public readonly status: number,
     public readonly code: string,
     message: string,
     public readonly fieldErrors?: Record<string, string[]>,
+    public readonly violations?: GateViolation[],
   ) {
     super(message);
     this.name = new.target.name;
@@ -70,6 +72,18 @@ export class UserProvisioningError extends AppError {
       500,
       code,
       "User creation did not complete reliably. Ask the operator to check the account before retrying.",
+    );
+  }
+}
+
+export class ApprovalBlockedError extends AppError {
+  constructor(violations: GateViolation[] = []) {
+    super(
+      422,
+      "APPROVAL_BLOCKED",
+      "Every required component must be counted without shortages.",
+      undefined,
+      violations,
     );
   }
 }

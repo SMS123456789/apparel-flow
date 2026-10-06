@@ -17,7 +17,7 @@ import { recipeOutput } from "./recipe-repository";
 import { translateDatabaseError } from "./admin-user-repository";
 import { ExternalServiceError, ValidationError } from "@/server/http/errors";
 export interface OrderRepository {
-  list(input: OrderListInput): Promise<OrderPage>;
+  list(input: OrderListInput, submittedOnly?: boolean): Promise<OrderPage>;
   find(id: string): Promise<OrderDetail | null>;
   create(actorId: string, input: CreateOrderInput): Promise<string>;
   edit(actorId: string, id: string, input: EditOrderInput): Promise<void>;
@@ -47,13 +47,14 @@ export class SupabaseOrderRepository implements OrderRepository {
     private readonly read: SupabaseClient<Database>,
     private readonly command: SupabaseClient<Database>,
   ) {}
-  async list(input: OrderListInput) {
+  async list(input: OrderListInput, submittedOnly = false) {
     let query = this.read
       .from("cutting_orders")
       .select("*,recipes!cutting_orders_recipe_id_fkey(name,recipe_code)")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(input.limit + 1);
+    if (submittedOnly) query = query.not("first_submitted_at", "is", null);
     if (input.status) query = query.eq("status", input.status);
     // Literal order-number search only; escape wildcard characters and disallow expression injection.
     if (input.search)
@@ -107,6 +108,12 @@ export class SupabaseOrderRepository implements OrderRepository {
       .maybeSingle();
     if (error) throw new ExternalServiceError();
     if (!row || !row.recipes) return null;
+    const { data: decimals, error: decimalError } = await this.read
+      .from("verification_evidence")
+      .select("id,actual_fabric_yds,expected_fabric_yds,wastage_pct")
+      .eq("order_id", id);
+    if (decimalError) throw new ExternalServiceError();
+    const exact = new Map(decimals.map((d) => [d.id, d]));
     const recipe = recipeOutput(row.recipes);
     const attempts = row.verification_attempts
       .toSorted((a, b) => a.attempt_no - b.attempt_no)
@@ -160,25 +167,34 @@ export class SupabaseOrderRepository implements OrderRepository {
       evidence: row.verification_attempts
         .flatMap((a) => a.verification_logs)
         .toSorted((a, b) => a.created_at.localeCompare(b.created_at))
-        .map((l) => ({
-          id: l.id,
-          attemptId: l.attempt_id,
-          decision: l.decision,
-          verifierId: l.verifier_id,
-          verifierName: l.verifier_name_snapshot,
-          createdAt: l.created_at,
-          reason: l.rejection_note,
-          actualFabricYards: String(l.actual_fabric_yds),
-          expectedFabricYards: String(l.expected_fabric_yds),
-          wastagePct: String(l.wastage_pct),
-          items: l.verification_log_items.map((i) => ({
-            componentId: i.component_id,
-            name: i.component_name_snapshot,
-            expectedQty: i.expected_qty,
-            actualQty: i.actual_qty,
-            status: i.status,
-          })),
-        })),
+        .map((l) => {
+          const decimal = exact.get(l.id);
+          if (
+            !decimal?.actual_fabric_yds ||
+            !decimal.expected_fabric_yds ||
+            !decimal.wastage_pct
+          )
+            throw new ExternalServiceError();
+          return {
+            id: l.id,
+            attemptId: l.attempt_id,
+            decision: l.decision,
+            verifierId: l.verifier_id,
+            verifierName: l.verifier_name_snapshot,
+            createdAt: l.created_at,
+            reason: l.rejection_note,
+            actualFabricYards: decimal.actual_fabric_yds,
+            expectedFabricYards: decimal.expected_fabric_yds,
+            wastagePct: decimal.wastage_pct,
+            items: l.verification_log_items.map((i) => ({
+              componentId: i.component_id,
+              name: i.component_name_snapshot,
+              expectedQty: i.expected_qty,
+              actualQty: i.actual_qty,
+              status: i.status,
+            })),
+          };
+        }),
     };
   }
   async create(actorId: string, input: CreateOrderInput) {

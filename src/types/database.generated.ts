@@ -121,6 +121,13 @@ export type Database = {
             foreignKeyName: "cutting_orders_approved_log_fk";
             columns: ["approved_log_id", "id", "approval_decision"];
             isOneToOne: false;
+            referencedRelation: "verification_evidence";
+            referencedColumns: ["id", "order_id", "decision"];
+          },
+          {
+            foreignKeyName: "cutting_orders_approved_log_fk";
+            columns: ["approved_log_id", "id", "approval_decision"];
+            isOneToOne: false;
             referencedRelation: "verification_logs";
             referencedColumns: ["id", "order_id", "decision"];
           },
@@ -501,6 +508,13 @@ export type Database = {
             foreignKeyName: "verification_log_items_log_id_order_id_attempt_id_fkey";
             columns: ["log_id", "order_id", "attempt_id"];
             isOneToOne: false;
+            referencedRelation: "verification_evidence";
+            referencedColumns: ["id", "order_id", "attempt_id"];
+          },
+          {
+            foreignKeyName: "verification_log_items_log_id_order_id_attempt_id_fkey";
+            columns: ["log_id", "order_id", "attempt_id"];
+            isOneToOne: false;
             referencedRelation: "verification_logs";
             referencedColumns: ["id", "order_id", "attempt_id"];
           },
@@ -585,7 +599,65 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      verification_evidence: {
+        Row: {
+          actual_fabric_yds: string | null;
+          attempt_id: string | null;
+          created_at: string | null;
+          decision: Database["public"]["Enums"]["verification_decision"] | null;
+          expected_fabric_yds: string | null;
+          id: string | null;
+          order_id: string | null;
+          rejection_note: string | null;
+          verifier_id: string | null;
+          verifier_name_snapshot: string | null;
+          wastage_pct: string | null;
+        };
+        Insert: {
+          actual_fabric_yds?: never;
+          attempt_id?: string | null;
+          created_at?: string | null;
+          decision?:
+            Database["public"]["Enums"]["verification_decision"] | null;
+          expected_fabric_yds?: never;
+          id?: string | null;
+          order_id?: string | null;
+          rejection_note?: string | null;
+          verifier_id?: string | null;
+          verifier_name_snapshot?: string | null;
+          wastage_pct?: never;
+        };
+        Update: {
+          actual_fabric_yds?: never;
+          attempt_id?: string | null;
+          created_at?: string | null;
+          decision?:
+            Database["public"]["Enums"]["verification_decision"] | null;
+          expected_fabric_yds?: never;
+          id?: string | null;
+          order_id?: string | null;
+          rejection_note?: string | null;
+          verifier_id?: string | null;
+          verifier_name_snapshot?: string | null;
+          wastage_pct?: never;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "verification_logs_attempt_id_order_id_fkey";
+            columns: ["attempt_id", "order_id"];
+            isOneToOne: false;
+            referencedRelation: "verification_attempts";
+            referencedColumns: ["id", "order_id"];
+          },
+          {
+            foreignKeyName: "verification_logs_verifier_id_fkey";
+            columns: ["verifier_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
       admin_create_profile: {
@@ -658,6 +730,35 @@ export type Database = {
       };
       cutting_submit: {
         Args: { p_actor_id: string; p_order_id: string; p_revision: number };
+        Returns: string;
+      };
+      verification_approve: {
+        Args: {
+          p_actor_id: string;
+          p_attempt_id: string;
+          p_order_id: string;
+          p_revision: number;
+        };
+        Returns: string;
+      };
+      verification_reject: {
+        Args: {
+          p_actor_id: string;
+          p_attempt_id: string;
+          p_order_id: string;
+          p_reason: string;
+          p_revision: number;
+        };
+        Returns: string;
+      };
+      verification_save: {
+        Args: {
+          p_actor_id: string;
+          p_attempt_id: string;
+          p_items: Json;
+          p_order_id: string;
+          p_revision: number;
+        };
         Returns: string;
       };
     };

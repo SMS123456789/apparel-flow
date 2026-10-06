@@ -5,6 +5,8 @@ import { SupabaseRecipeRepository } from "@/server/repositories/recipe-repositor
 import { SupabaseOrderRepository } from "@/server/repositories/order-repository";
 import { OrderService } from "@/server/services/order-service";
 import { RecipeService } from "@/server/services/recipe-service";
+import { VerificationService } from "@/server/services/verification-service";
+import { SupabaseVerificationRepository } from "@/server/repositories/verification-repository";
 export async function createOrderService(headers: Headers) {
   const read = await createServerSupabaseClient(headers);
   return new OrderService(
@@ -15,5 +17,14 @@ export async function createOrderService(headers: Headers) {
 export async function createRecipeService(headers: Headers) {
   return new RecipeService(
     new SupabaseRecipeRepository(await createServerSupabaseClient(headers)),
+  );
+}
+
+export async function createVerificationService(headers: Headers) {
+  const read = await createServerSupabaseClient(headers),
+    command = createAdminSupabaseClient();
+  return new VerificationService(
+    new SupabaseOrderRepository(read, command),
+    new SupabaseVerificationRepository(command),
   );
 }

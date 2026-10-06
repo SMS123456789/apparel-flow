@@ -1,6 +1,6 @@
 # 00 - Project charter
 
-**Status:** G00–G04 are merged into main. G05 supervisor workflow is implemented on feat/g05-supervisor-workflow and completing final regression checks. The continuation authorizes G06–G08 sequentially; production deployment remains manual user action.
+**Status:** G00–G07 are merged into main. G08 submission artifacts and final evaluator checks are complete before its merge. Cutting, verification, re-cut and verified-only sewing are implemented. **LIVE DEPLOYMENT: PENDING MANUAL USER DEPLOYMENT.** See [16 Submission checklist](16_SUBMISSION_CHECKLIST.md) and [the deployment guide](../DEPLOYMENT_GUIDE.md).
 **Reviewed/approved:** 2026-10-06, Asia/Colombo.
 **Sources:** *ApparelFlow ERP - Software Engineering Practical Challenge*, Webtezza (Pvt) Ltd, all six pages/sections 1-16; original G00 request; user's decision-approval table; subsequent synchronous admin-creation clarification.
 
@@ -35,7 +35,7 @@ A classification on a paragraph/table/section applies to its entries unless over
 | PROPOSED ASSUMPTION | Explicit implementation interpretation, not an assessment requirement. |
 | UNRESOLVED | Requires human approval; only the canonical register may record open decisions. |
 
-All 26 historical UD IDs now have approved directions in [APPROVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#approved_decisions). [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) is empty. Exact G01 package/configuration choices are recorded in [G01 scaffold decisions](14_ARCHITECTURE_DECISIONS.md#g01-scaffold-decisions), and infrastructure choices in [G02 Supabase foundation decisions](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions). G03 schema and narrow G04 identity/admin grants are implemented; manufacturing transaction and read-policy mechanics remain later work, not reopened architecture questions. Each milestone's authorization comes from its explicit user request.
+All 26 historical UD IDs now have approved directions in [APPROVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#approved_decisions). [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) is empty. Exact G01 package/configuration choices are recorded in [G01 scaffold decisions](14_ARCHITECTURE_DECISIONS.md#g01-scaffold-decisions), and infrastructure choices in [G02 Supabase foundation decisions](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions). G03 schema, G04 identity/admin and G05–G07 manufacturing transactions/read policies are implemented; their locked commands preserve the approved architecture. Each milestone's authorization comes from its explicit user request.
 
 ## Deliverables and reading map
 
@@ -53,14 +53,16 @@ All 26 historical UD IDs now have approved directions in [APPROVED_DECISIONS](14
 | [10 Admin panel](10_ADMIN_PANEL_SPEC.md) | Temporary-password creation, cleanup/error behavior, audit. |
 | [11 Test plan](11_TEST_PLAN.md) | Required tests plus security/transaction/creation-failure checks. |
 | [12 Engineering rules](12_CODEX_ENGINEERING_RULES.md) | Architecture/approval boundaries and engineering discipline. |
-| [13 Roadmap](13_IMPLEMENTATION_ROADMAP.md) | Future milestones with core-first assessment priority. |
+| [13 Roadmap](13_IMPLEMENTATION_ROADMAP.md) | Completed chunk sequence and historical milestone inventory. |
 | [14 Architecture decisions](14_ARCHITECTURE_DECISIONS.md) | Approved register, interpretations, logical diagram. |
 
 ## Success measures and constraints
 
 **ASSESSMENT REQUIREMENT:** Evaluator can sign in as each production persona, create/submit, observe UI/API shortage blocking, approve valid counts, see the batch in sewing, and refresh without loss (16, p.6). Rubric: domain 15%, hard stop 20%, roles 15%, database/architecture 15%, UI 15%, tests 10%, AI candor 10% (15, p.6).
 
-**ASSESSMENT REQUIREMENT:** Future submission needs live public cloud URL, public GitHub with atomic commits, root README architecture/schema/three demo credentials, runnable passing tests, and four-section AI_OPTIMIZATION_REPORT.md with two actual flawed AI-code examples (12/14, pp.5-6). G00 records these obligations without claiming an application exists.
+**ASSESSMENT REQUIREMENT:** Final submission needs live public cloud URL, public GitHub with atomic commits, root README architecture/schema/three demo credentials, runnable passing tests, and four-section AI_OPTIMIZATION_REPORT.md with two actual flawed AI-code examples (12/14, pp.5-6). G00 records these obligations without claiming an application exists.
+
+**DESIGN DECISION (G04 evaluator access, ADR-040):** README documents the three real demo persona buttons. Each authenticates its distinct Supabase account using private server configuration; passwords remain in ignored local/Vercel configuration. The assessment credential wording above remains recorded; implemented evaluator access follows the approved G04 real-account flow. SYSTEM_ADMIN credentials are never public.
 
 **ASSESSMENT REQUIREMENT:** Four calendar days from issue date, 28-32 focused hours (p.1; 13, p.5). **DESIGN DECISION (approved by user, UD-024):** This schedule is not an architecture blocker; admin is secondary. Use relative milestone days without inventing a calendar deadline.
 

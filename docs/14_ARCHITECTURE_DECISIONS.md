@@ -4,6 +4,8 @@ Classification follows [00](00_PROJECT_CHARTER.md). Assessment source: the suppl
 
 **Approval recorded:** 2026-10-06, Asia/Colombo, by the user in this conversation. All 26 UD directions are approved. G00/G01/G02 are committed and merged. The subsequent explicit G03 request authorizes database migrations, exact recipe seeds, remote application, generated types, and verification on a new branch; it stops before G04 and application features.
 
+**Current implementation:** G04–G07 are merged and G08 prepares final submission. Historical milestone records below retain their original scope/results; current completion and remaining manual deployment are summarized in [16](16_SUBMISSION_CHECKLIST.md).
+
 ## Captured architecture decisions
 
 | ID | Classification/status | Decision and consequence |
@@ -437,3 +439,40 @@ SQL suite/four actual connection races, cloud catalog/type generation and separa
 production build pass. Repeated bootstrap verifies signup disabled and all four
 real active accounts without resetting credentials. G07 is complete and proceeds
 to merge; G08 prepares submission and manual deployment documentation only.
+
+## G08 submission readiness
+
+G07 merged through PR #7, feature 6a94ea6, main bfa4446. G08 completes root README,
+AI_OPTIMIZATION_REPORT.md with the exact four assessment sections and at least
+three actual recorded defects, DEPLOYMENT_GUIDE.md with nine manual deployment
+sections, and docs/16_SUBMISSION_CHECKLIST.md mapping all five assessment cases.
+The report distinguishes human direction from agent-authored corrections and
+preserves real migration/commit evidence. The guide lists actual app/demo/
+operator variables, bootstrap, real /login/API routes and the absence of any
+Auth callback; no private value is published. Current provider documentation
+was checked on 2026-10-07. Active implementation blurbs now reflect the complete
+system; historical milestone records and approved business rules are retained.
+
+No production deployment, Vercel project configuration or DNS operation occurred.
+The user must import merged main, configure the documented Production origin/
+variables and Supabase Site URL, deploy and run the public smoke test. LIVE
+DEPLOYMENT is the only pending user action.
+
+Final G08 evaluation on 2026-10-07: typecheck/lint/format, 215 Vitest tests
+across 13 files, eight-migration SQL suite/four real two-session races,
+23 Playwright passes/one deliberate duplicate viewport skip and a separate
+production build all pass. Cloud history/catalog verification and bootstrap
+replay confirm the current eight migrations, disabled signup and four active
+real account sign-ins. Local document links/anchors/npm commands are checked;
+the AI report has its four exact sections and the deployment guide its nine.
+Configured private values are absent from source/generated browser/server JS;
+the production dependency audit has zero findings. No source/schema/package
+change was needed for G08.
+
+GitHub was still private at final submission review. The continuation requires
+public atomic history. Before changing visibility, all 299 unique reachable
+Git blobs/commits/tags and 14 GitHub PR/issue/comment records were checked for
+the seven configured private values and privileged-key patterns; none were
+found, no private environment file was in history, and no Actions runs existed.
+The repository is now PUBLIC. This publishes source history only; it does not
+deploy or configure the website. G08 proceeds through its documentation PR merge.

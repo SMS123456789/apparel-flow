@@ -10,7 +10,7 @@
 
 Creation performs Supabase Admin Auth createUser(email_confirm=true), then a backend-only profile-plus-audit transaction. If persistence fails, the service checks whether a profile committed before attempting deletion of only the newly created incomplete Auth identity. Unknown/committed outcomes return PROVISIONING_OUTCOME_UNCERTAIN; absent profile triggers cleanup and controlled PROFILE_CREATION_FAILED/USER_CLEANUP_FAILED. Existing identities are never deleted. No invitation email or mandatory first-login password reset was added.
 
-Role/activity updates lock/recheck the active admin and target, reject all SYSTEM_ADMIN targets, apply expectedRevision and append audit atomically. Four narrowly granted admin gateways support the repository; service_role has no direct DML and no manufacturing command. The operator bootstrap is idempotent, verifies existing credentials before granting a profile, refuses role/name/activity mismatches and never resets existing passwords.
+Role/activity updates lock/recheck the active admin and target, reject all SYSTEM_ADMIN targets, apply expectedRevision and append audit atomically. Four narrowly granted admin gateways support the repository; service_role has no direct DML; the identity command owner and SYSTEM_ADMIN have no manufacturing permission. Production commands use their separate restricted owner. The operator bootstrap is idempotent, verifies existing credentials before granting a profile, refuses role/name/activity mismatches and never resets existing passwords.
 
 ## Screens
 

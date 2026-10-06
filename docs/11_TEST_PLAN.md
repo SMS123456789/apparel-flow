@@ -1,8 +1,8 @@
 # 11 - Test and verification plan
 
-**ASSESSMENT REQUIREMENT (section 10, p.4):** Automated domain/API/database proof of five core cases. **DESIGN DECISION (approved by user):** Vitest and Playwright. The matrix below is the approved full-system test plan. G00 executed no runtime tests; G01–G04 evidence is recorded separately in document 14. Passing G04 identity/admin checks does not complete manufacturing acceptance.
+**ASSESSMENT REQUIREMENT (section 10, p.4):** Automated domain/API/database proof of five core cases. **DESIGN DECISION (approved by user):** Vitest and Playwright. The matrix below is the approved full-system test plan. G00 executed no runtime tests; G01–G08 evidence is recorded in document 14. All five manufacturing cases now pass; the final execution map is [16](16_SUBMISSION_CHECKLIST.md).
 
-## Current G04 verification
+## Historical G04 verification
 
 Vitest uses pure schemas/guards, typed service adapters and actual Route Handler/controller integration with mocked external dependencies. It covers role isolation, profile activity, strict inputs, creation success/compensation/uncertainty, audit orchestration, safe errors/origin/no-store and Proxy cookie propagation; mocks do not claim cloud Auth/RLS correctness.
 
@@ -12,7 +12,7 @@ Playwright uses all four real configured Supabase accounts, desktop/mobile Chrom
 
 ## Test levels and fixtures
 
-**DESIGN DECISION (implementation detail):** Vitest unit tests exercise real pure domain functions; service tests check orchestration using typed repositories; API integration tests authenticate real Supabase test users and hit Route Handlers against an isolated test database; database/RLS tests use actual grants/policies and transactional commands; Playwright checks real user journeys and visible states. Mocks alone cannot prove RLS, locks, durable persistence, or rollback.
+**DESIGN DECISION (implementation detail):** Vitest unit tests exercise real pure domain functions; service tests check orchestration using typed repositories; Route Handler/controller/service integration tests mock external Auth/persistence adapters; Playwright direct API tests authenticate real Supabase users and hit the production-mode local server against the configured assessment database; database/RLS tests use actual grants/policies and transactional commands; Playwright checks real user journeys and visible states. Mocks alone cannot prove RLS, locks, durable persistence, or rollback.
 
 Fixtures use exact REC-BL01/REC-CT02 and their five components each, distinct accounts for S/V/W/A, inactive account, prepared/pending/rejected/verified orders, complete/null/missing/excess/shortage sets, and historical re-cut attempts. Exact package versions are pinned in G01; isolated test setup is implementation work and not an architecture blocker. No tests run destructive resets against an unknown cloud project.
 
@@ -99,3 +99,20 @@ Manual evaluator sequence (section 16, p.6): inspect every input/dropdown; switc
 **DESIGN DECISION (implementation detail):** Each implementation milestone records command/result, tested commit, environment, fixture identity, and failures fixed. Passing mocked unit tests does not mean assessment complete. Release requires all five core cases plus real RBAC/RLS/transaction/persistence checks, UI audit, and submission review. Coverage percentages and numeric latency targets are not invented acceptance gates.
 
 G00 verification consists only of source-reading and documentation consistency/link/trace checks. No runtime correctness or automated application pass is claimed.
+
+## Final G07–G08 execution
+
+All five mandatory assessment cases and the happy/rejection-to-recut-to-sewing
+journeys are executed. Vitest has 215 passing tests across 13 files; Playwright
+has 23 passes and one explicit duplicate viewport-review skip. Disposable
+PostgreSQL executes eight migrations, full constraints/grants/RLS/rollback/
+immutability suites and four true two-session races. Cloud catalog/history/types
+and four real account sign-ins are independently verified. No cloud reset or
+SQL mutation fixture was used. Browser E2E records and administrative audit are
+retained; reversible demo role/activity changes are restored.
+
+UI review covers login/admin/cutting/verifier/sewing at 1280/768/375/320,
+actual field/action colors, focused/invalid/disabled states, touch/count sizing,
+keyboard dialogs, error focus, Enter safety, 200% text enlargement and persistence.
+This scoped evidence is not a formal independent WCAG certification.
+Only live deployment/public-URL smoke testing remains manual user action.

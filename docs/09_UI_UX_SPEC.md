@@ -4,7 +4,7 @@
 
 ## G04 implemented screens
 
-Login/demo, four protected role shells, /admin users and /admin/audit follow [15](15_UI_DESIGN_SYSTEM.md). The users screen is a searchable/filterable paginated table with native dialogs, explicit submission, error focus, dirty-discard confirmation and guarded pending actions. Role shells display actual identity only. Production screens below remain G05–G07.
+Login/demo, four protected role shells, /admin users and /admin/audit follow [15](15_UI_DESIGN_SYSTEM.md). The users screen is a searchable/filterable paginated table with native dialogs, explicit submission, error focus, dirty-discard confirmation and guarded pending actions. The initial G04 role shells displayed identity; they are replaced by real operational pages. G05–G07 now implement the production screens below.
 
 ## Navigation and authentication
 
@@ -77,4 +77,20 @@ Refresh reads persistent data through API. Demo switch clears old account conten
 
 ## G05 supervisor implementation
 
-/supervisor is the real cutting-orders table with state/order-number filters, pagination and Create Order. /supervisor/new and /supervisor/:id provide the four preparation inputs, immediate numeric errors, expected fabric/BOM preview, explicit save state and submission confirmation. Rejected detail exposes the reason and Begin Re-cut, while frozen recipe/target remain read-only. The shared native dialog retains keyboard containment. Grid min-width constraints confine mobile table scrolling to its labelled region. Desktop/mobile real browser creation/edit/submit/reload and visual screenshots are checked; broad full-system contrast/accessibility review follows G07.
+/supervisor is the real cutting-orders table with state/order-number filters, pagination and Create Order. /supervisor/new and /supervisor/:id provide the four preparation inputs, immediate numeric errors, expected fabric/BOM preview, explicit save state and submission confirmation. Rejected detail exposes the reason and Begin Re-cut, while frozen recipe/target remain read-only. The shared native dialog retains keyboard containment. Grid min-width constraints confine mobile table scrolling to its labelled region. Desktop/mobile real browser creation/edit/submit/reload and visual screenshots are checked; G07 completed the full-system responsive/contrast/keyboard review recorded in [16](16_SUBMISSION_CHECKLIST.md).
+
+## G06–G07 implemented production screens
+
+/verifier provides the pending queue and /verifier/history submitted history.
+/verifier/:id shows every frozen required component, explicit Save Counts, blank
+versus zero, text/icon live results, saved eligibility, reasons and immutable
+history. Unsaved/invalid/stale/in-flight counts block UI approval; server/SQL
+remain authoritative. A 409 preserves local entries for reread and deliberate
+Save Counts. Confirmation and focused reason errors follow the shared dialog.
+
+/sewing lists only VERIFIED batches with verifier/time, garment quantity,
+signed fabric variance and assembly state. /sewing/:id shows approved piece
+and fabric evidence only, never rejected-attempt history. Start Sewing Assembly
+records actor/time once while retaining VERIFIED; reload shows authoritative
+Started metadata. Desktop/tablet/mobile/320px and 200% text enlargement,
+measured control contrast, keyboard/dialog and scoped-table reflow were checked.

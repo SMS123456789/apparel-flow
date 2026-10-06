@@ -1,6 +1,6 @@
 # 12 - Codex engineering rules
 
-These rules implement the user's approved G00 boundary and future architecture. They do not authorize the next milestone.
+These rules preserve the user's approved architecture. The explicit continuation below authorizes G04–G08 implementation and merges; live deployment remains manual user work.
 
 ## Current authorized boundary
 

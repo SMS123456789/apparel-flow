@@ -14,7 +14,7 @@ The private security-barrier auth_identity_emails view projects only Auth id/ema
 
 ## G02 migration foundation
 
-**DESIGN DECISION (implementation detail):** Every application database/schema change must be represented by a version-controlled Supabase SQL migration. G02 initialized the pinned CLI but created no schema. G03 applies 20261006153000_apparelflow_domain_schema.sql and 20261006153100_assessment_recipes.sql plus the forward 20261006155500_rejection_reason_whitespace.sql fix to cloud PostgreSQL 17.11. The supported --db-url workflow uses the database password through PGPASSWORD without a Management API token/login. Login/link is an optional operator alternative; commands are documented in [README](../README.md#supabase-migration-workflow). Never edit applied SQL; future fixes require new migrations.
+**DESIGN DECISION (implementation detail):** Every application database/schema change must be represented by a version-controlled Supabase SQL migration. G02 initialized the pinned CLI but created no schema. G03 applies 20261006153000_apparelflow_domain_schema.sql and 20261006153100_assessment_recipes.sql plus the forward 20261006155500_rejection_reason_whitespace.sql fix to cloud PostgreSQL 17.11. The supported --db-url workflow uses the database password through PGPASSWORD without a Management API token/login. Login/link is an optional operator alternative; commands are documented in [README](../README.md#migrations-and-evaluator-provisioning). Never edit applied SQL; future fixes require new migrations.
 
 ## Assessment mapping
 
@@ -124,7 +124,7 @@ Auth creation and profile SQL are not one distributed transaction. The simple co
 
 **DESIGN DECISION (implementation detail under approved UD-012/UD-023):** User-scoped server Supabase clients perform RLS-protected reads. Deny anon/authenticated raw production/profile mutations and privileged command EXECUTE. Backend elevated commands check current actor/role/creator/state because service-role bypasses RLS.
 
-If elevated helpers are needed, use private unexposed schema, least-privilege owner, qualified names, pinned search_path, restricted grants; a future exposed invoker gateway is backend-credential-only. G03 established safe default-deny grants. G04 introduces only the four admin gateways described below; no manufacturing gateway exists. Later workflow goals introduce reviewed command grants without reopening UD-012. No browser path may call future privileged entry points.
+If elevated helpers are needed, use private unexposed schema, least-privilege owner, qualified names, pinned search_path, restricted grants; exposed invoker gateways are backend-credential-only. G03 established safe default-deny grants. G04 introduced four admin gateways; G05–G07 added eight reviewed production gateways without reopening UD-012. No browser path may call privileged entry points.
 
 Application SYSTEM_ADMIN is not infrastructure service_role. Application immutability does not protect against a database owner deliberately editing storage; operational recovery is outside normal UI authority.
 

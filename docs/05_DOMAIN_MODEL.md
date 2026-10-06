@@ -1,6 +1,6 @@
 # 05 - Domain model and layer boundaries
 
-Classification follows [00](00_PROJECT_CHARTER.md). G03 implements the database entities/snapshots/history described below; application interfaces and collaborations remain future work. The actual tables, constraints, and migration boundaries are in [06](06_DATABASE_DESIGN.md). No controller/service/domain feature has been implemented.
+Classification follows [00](00_PROJECT_CHARTER.md). G03 implements the database entities/snapshots/history described below; G04–G07 implement identity, order, verification and sewing interfaces/collaborations. The actual tables, constraints, and migration boundaries are in [06](06_DATABASE_DESIGN.md). Controllers/services/repositories preserve those boundaries; the current implementation and validation are summarized in [16](16_SUBMISSION_CHECKLIST.md).
 
 ## Bounded modules and entities
 
@@ -36,7 +36,7 @@ erDiagram
 
 Auth identity may briefly exist before its profile, or remain without one after failed cleanup; missing profile always denies application access. A prepared order can have no attempt/manifest yet. Only submitted orders require frozen manifest and attempt/item set. Submission checks completeness, not only foreign keys. Rejection may contain uncounted items; approval may not.
 
-G03 preserves the stronger documented equivalents allowed by its request: order_components is the frozen BOM, attempts use OPEN/APPROVED/REJECTED, and sewing start is an immutable attributed pair on cutting_orders rather than a separate sewing_starts table. Database app_role values are the lowercase assessment identifiers plus system_admin; future application/API identifiers remain uppercase as documented in [03](03_ROLES_AND_PERMISSIONS.md). This naming mapping does not add roles.
+G03 preserves the stronger documented equivalents allowed by its request: order_components is the frozen BOM, attempts use OPEN/APPROVED/REJECTED, and sewing start is an immutable attributed pair on cutting_orders rather than a separate sewing_starts table. Database app_role values are the lowercase assessment identifiers plus system_admin; application/API identifiers are uppercase as documented in [03](03_ROLES_AND_PERMISSIONS.md). This naming mapping does not add roles.
 
 ## Aggregate invariants
 

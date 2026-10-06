@@ -4,7 +4,7 @@
 
 ## G02 credential foundation
 
-**DESIGN DECISION (implementation detail):** NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are browser-safe. SUPABASE_SECRET_KEY is separately validated in a server-only module; legacy anon/service_role values map to the public/secret variables respectively. Browser, cookie-based user-context server, and stateless privileged factories are separate. The server factory propagates SSR cookie writes/cache headers to a writable response context and does not hide failures. G02 deferred login/guards/Proxy/cloud Auth settings; G04 now implements those identity features. Local and verified cloud settings disable signup; manufacturing RLS remains later work. G02 connectivity uses trusted development-only read requests, never a public diagnostic API. See [G02 decisions](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions).
+**DESIGN DECISION (implementation detail):** NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are browser-safe. SUPABASE_SECRET_KEY is separately validated in a server-only module; legacy anon/service_role values map to the public/secret variables respectively. Browser, cookie-based user-context server, and stateless privileged factories are separate. The server factory propagates SSR cookie writes/cache headers to a writable response context and does not hide failures. G02 deferred login/guards/Proxy/cloud Auth settings; G04 now implements those identity features. Local and verified cloud settings disable signup; G05–G07 implement the manufacturing RLS boundaries below. G02 connectivity uses trusted development-only read requests, never a public diagnostic API. See [G02 decisions](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions).
 
 ## Identity and session
 
@@ -46,7 +46,7 @@ Keep server command/Auth-admin clients isolated in server-only adapters; secret 
 
 **DESIGN DECISION (approved UD-009):** One factory, no tenancy and no creator-owned visibility filters. Current role determines records. Creator identity remains solely for attribution and self-verification prevention.
 
-The following read policies/grants are future implementation details of that role contract, not active G03 policies. G03 denies ordinary reads as well as writes until reviewed authentication/RBAC migrations introduce scoped access. All anon application access remains denied; raw authenticated application writes remain denied.
+The following read policies/grants are implemented by G04–G07. G03 historically denied ordinary reads as well as writes before those reviewed scoped-access migrations. All anon application access remains denied; raw authenticated application writes remain denied.
 
 | Resource | Supervisor SELECT | Verifier SELECT | Sewing SELECT | Admin SELECT | Raw user mutations |
 |---|---|---|---|---|---|
@@ -66,7 +66,7 @@ Every child-row lookup inherits parent restrictions. Own-created order read acce
 
 **DESIGN DECISION (approved UD-010/UD-012):** Every count/approve/reject command verifies current CUTTING_VERIFIER and actor != cutting_orders.created_by even after reassignment. Controller/service enforce it, and locked RPC rechecks it. Wrong role or creator -> 403; hard stop -> 422; state/revision conflict -> 409.
 
-Browser JWTs cannot execute privileged commands. G03 implements default-deny grants and invoker-only private trigger helpers; G04 adds backend admin gateways only; no production approval RPC exists. Later workflow migrations review any command/helper grants. If a definer helper is required then, keep it private/unexposed with pinned search_path, qualified relations, controlled owner/EXECUTE; expose only a backend-credential invoker entry. [Supabase function security](https://supabase.com/docs/guides/database/functions).
+Browser JWTs cannot execute privileged commands. G03 implements default-deny grants and invoker-only private trigger helpers; G04 added backend admin gateways and G05–G07 added reviewed production commands. Their definer helpers are private/unexposed with pinned search_path, qualified relations, restricted owner/EXECUTE; only backend-credential invoker entries are exposed. [Supabase function security](https://supabase.com/docs/guides/database/functions).
 
 Internal actor_id is derived by trusted controller; only backend can supply it. A service-role request does not magically carry a user's auth.uid. The command must read protected active role and reject forged/inappropriate internal actors.
 
@@ -103,9 +103,9 @@ Implementation details:
 Required direct supervisor approval is 403; RED/missing/uncounted is 422; sewing never exposes unapproved data. Approved additions: creator verification 403 after role change; admin self/promotion guards; read access by role across factory; cleanup failure cannot grant missing-profile access. [11](11_TEST_PLAN.md) plans direct API/DB/RPC, concurrency/rollback, audit, origin/cache, and creation-failure tests. None is claimed implemented during G00.
 
 
-## G05 implemented production boundary
+## Historical G05 production boundary
 
-The G05 migration adds narrow SELECT grants/policies for active cutting-role catalog and active supervisor factory orders/children. Sewing/admin/inactive subjects receive no production/reference rows. Public cutting_create/cutting_edit/cutting_submit/cutting_recut are invoker-only and executable by service_role alone. Private commands recheck the locked actor's current cutting_supervisor role/activity and order revision/state. The production command owner cannot assign profile roles/activity, access Auth or administer accounts. API-role direct writes and command EXECUTE stay denied. Missing/foreign/empty inputs, trusted client state/identity/expected fields and generic status mutation are rejected at the server boundary.
+The G05 migration adds narrow SELECT grants/policies for active cutting-role catalog and active supervisor factory orders/children. At G05, Sewing/admin/inactive subjects received no production/reference rows; final Sewing scope is described below. Public cutting_create/cutting_edit/cutting_submit/cutting_recut are invoker-only and executable by service_role alone. Private commands recheck the locked actor's current cutting_supervisor role/activity and order revision/state. The production command owner cannot assign profile roles/activity, access Auth or administer accounts. API-role direct writes and command EXECUTE stay denied. Missing/foreign/empty inputs, trusted client state/identity/expected fields and generic status mutation are rejected at the server boundary.
 
 ## Final G06–G07 production boundaries
 

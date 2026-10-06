@@ -2,7 +2,15 @@
 
 **ASSESSMENT REQUIREMENT (8, p.4):** Persistent relational representation of users, recipes/components, orders, verification items/logs; refinements allowed. **DESIGN DECISION (approved by user):** Supabase PostgreSQL/Auth/RLS, no Prisma, no migrations in G00. Single factory, no tenancy or creator-ownership columns/policies.
 
-G03 implements the relational inventory below through three version-controlled migrations. Future workflow/transaction internals remain design targets; no approval/rejection RPC or application service exists yet.
+G03 implements the relational inventory through three migrations. G04 adds two forward migrations for scoped identity reads and four backend-only admin gateways; the ten-table/six-enum domain inventory is unchanged. Authentication/admin services exist; manufacturing transactions and approval/rejection RPCs remain later work.
+
+## G04 identity/admin access
+
+Forward migrations 20261006163000_identity_admin_access.sql and 20261006170000_identity_auth_projection.sql introduce exactly one authenticated SELECT policy: profiles.id = auth.uid() and is_active. Authenticated users cannot write profiles or execute admin commands; production/reference tables remain denied. service_role still has no direct table DML.
+
+The public admin_list_users/admin_create_profile/admin_update_profile/admin_list_audit functions are SECURITY INVOKER entry points executable only by service_role. They call four private SECURITY DEFINER commands with an empty search_path, fully qualified references and a restricted NOLOGIN, NOINHERIT, BYPASSRLS owner. That owner has only profile SELECT/INSERT/limited UPDATE and administrative audit SELECT/INSERT; no DELETE or production permissions. An internal invoker assertion locks/rechecks the active SYSTEM_ADMIN. Update locks actor/target in UUID order, protects admin targets, checks revision and inserts immutable audit in the same transaction.
+
+The private security-barrier auth_identity_emails view projects only Auth id/email. Its operator owner already has managed Auth access; the command owner has SELECT only on this view and no direct Auth schema/table permissions. API roles cannot read it. This avoids granting broad managed-schema privileges or duplicating email/password data in profiles. A temporary CREATE grant for replacing the private commands is revoked within the forward migration. Catalog tests document and enforce all owner/schema/function/column grants.
 
 ## G02 migration foundation
 
@@ -34,7 +42,7 @@ G03 implements the relational inventory below through three version-controlled m
 | verification_items | id/order_id/attempt_id/order_component_id/component_id; expected/nullable actual bigint; generated signed variance_qty; nullable component_status; updated_by; created_at/updated_at | Unique attempt/order-component; same-order/expected-basis FKs; count/status nullable together and consistent; finalized evidence cannot change/extend. |
 | verification_logs | id/order_id/attempt_id/verifier_id; verifier name/role snapshots; decision; rejection_note; actual/expected fabric; signed wastage_pct; created_at | Unique attempt; one APPROVED/order; reason trimmed 1-1000 for REJECTED, null for APPROVED; immutable. Future RPC verifies actor/creator/gate/calculation. |
 | verification_log_items | log_id/order_id/attempt_id/order_component_id/component_id; name snapshot; expected/nullable actual; generated variance; nullable status | Natural UUID-pair PK(log_id, order_component_id), no independent identity; same-attempt/count-manifest association; immutable. Future RPC verifies approved completeness. |
-| admin_audit_events | id/actor_id/target_user_id UUID; admin_audit_action; before_state/after_state JSON; request_id UUID; created_at | Immutable; JSON permits typed full_name/role/is_active only, no credential/nested arbitrary payload. Atomic account+audit workflow remains future work. |
+| admin_audit_events | id/actor_id/target_user_id UUID; admin_audit_action; before_state/after_state JSON; request_id UUID; created_at | Immutable; JSON permits typed full_name/role/is_active only, no credential/nested arbitrary payload. G04 profile creation and role/activity updates append audit atomically. |
 
 No separate roles table, sewing_starts table, tenant/plant tables, or durable admin_operations table is needed. Sewing start metadata lives on cutting_orders. Fabric roll is an identifier, not inventory scope.
 
@@ -61,7 +69,7 @@ Cloud has 44 indexes: 26 supporting PK/unique constraints plus 18 purposeful ind
 
 Enums: app_role = system_admin/cutting_supervisor/cutting_verifier/sewing_supervisor; production_status = CUTTING_IN_PROGRESS/PENDING_VERIFICATION/REJECTED/VERIFIED; verification_attempt_status = OPEN/APPROVED/REJECTED; component_status = GREEN/YELLOW/RED; verification_decision = APPROVED/REJECTED; admin_audit_action = USER_CREATED/USER_ROLE_CHANGED/USER_ACTIVATED/USER_DEACTIVATED.
 
-All ten tables enable RLS with zero policies. PUBLIC/anon/authenticated have no table privileges; service_role has SELECT only and no direct INSERT/UPDATE/DELETE/TRUNCATE. Future role reads and restricted transaction entry points require reviewed migrations. G03 does not establish an application production-write path.
+At G03 all ten tables enabled RLS with zero policies. At that milestone PUBLIC/anon/authenticated had no table privileges and service_role had SELECT only. G04 adds only the own-active-profile SELECT and restricted admin commands above; all direct INSERT/UPDATE/DELETE/TRUNCATE and manufacturing access remain denied. Future manufacturing reads/transactions require reviewed migrations.
 
 Seven invoker-only app_private trigger helpers use an empty search_path and qualified relations. API roles lack schema/function/sequence privileges. Twenty-six triggers block hard deletions; protect reference/BOM/log/log-item/admin-audit updates; freeze submitted recipe/target and verified order facts; preserve sewing attribution; freeze attempt inputs/finalized rows; and prevent changing/extending finalized count/sign-off evidence. Reusable set_updated_at covers only profiles/orders/attempts/items and also protects stable IDs/creation timestamps. A database owner can deliberately disable protections; this is outside ordinary application authority.
 
@@ -77,7 +85,7 @@ Seven invoker-only app_private trigger helpers use an empty search_path and qual
 
 Future first submission inserts the complete BOM before setting first_submitted_at in the same transaction. Sign-off inserts log/items while the attempt is OPEN, then closes it and updates the order atomically. These ordering requirements support immutability; they do not implement actor authorization, legal transitions, manifest completeness, or approval RPCs in G03.
 
-The deterministic recipe migration supplies only the two exact assessment recipes and ten nullable-image components. Replay is idempotent and validates equality without overwriting conflicts. No cloud profiles/Auth users/orders/verification/sewing/admin events are seeded. CLI definitions live in src/types/database.generated.ts and bind all three factories; generated types do not grant permissions.
+The deterministic recipe migration supplies only the two exact assessment recipes and ten nullable-image components. Replay is idempotent and validates equality without overwriting conflicts. G03 seeds no cloud profiles/Auth users/orders/verification/sewing/admin events. G04 operator provisioning separately creates four real Auth identities/profiles and administrative creation evidence, with private credentials outside migrations. CLI definitions live in src/types/database.generated.ts and bind all three factories; generated types do not grant permissions.
 
 ## Transaction strategy and layer ownership
 
@@ -116,6 +124,6 @@ Auth creation and profile SQL are not one distributed transaction. The simple co
 
 **DESIGN DECISION (implementation detail under approved UD-012/UD-023):** User-scoped server Supabase clients perform RLS-protected reads. Deny anon/authenticated raw production/profile mutations and privileged command EXECUTE. Backend elevated commands check current actor/role/creator/state because service-role bypasses RLS.
 
-If elevated helpers are needed, use private unexposed schema, least-privilege owner, qualified names, pinned search_path, restricted grants; a future exposed invoker gateway is backend-credential-only. G03 implements safe default-deny grants; there is no mutation gateway yet. Later workflow goals introduce reviewed command grants without reopening UD-012. No browser path may call future privileged entry points.
+If elevated helpers are needed, use private unexposed schema, least-privilege owner, qualified names, pinned search_path, restricted grants; a future exposed invoker gateway is backend-credential-only. G03 established safe default-deny grants. G04 introduces only the four admin gateways described below; no manufacturing gateway exists. Later workflow goals introduce reviewed command grants without reopening UD-012. No browser path may call future privileged entry points.
 
 Application SYSTEM_ADMIN is not infrastructure service_role. Application immutability does not protect against a database owner deliberately editing storage; operational recovery is outside normal UI authority.

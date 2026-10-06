@@ -15,6 +15,10 @@
 
 **DESIGN DECISION (approved by user, UD-010):** A user who created an order can never verify that order, even after reassignment to CUTTING_VERIFIER. This restriction applies to entering counts, approval, and rejection and is checked by backend guards/services and again inside transactional commands. History remains readable where the current role permits it; read access does not permit self-verification. SYSTEM_ADMIN cannot self-assign production privileges.
 
+## Current implementation: G04
+
+The canonical server identity comes from Auth getUser() plus the matching active profiles row. requireUser/requireRole use exact role membership with no inheritance. Every admin controller and service independently guards SYSTEM_ADMIN; every role page checks its current role. Admin can list/create production users, change production role/activity and read audit. Other permissions in the matrix are the approved future manufacturing contract; G04 provides role shells only. Existing JWTs are denied after deactivation and reflect the current role after reassignment.
+
 ## Capability matrix
 
 A = assessment; E = approved extension; D = approved design decision. Deny anything not granted.
@@ -41,7 +45,7 @@ A = assessment; E = approved extension; D = approved design decision. Deny anyth
 | Rewrite finalized evidence/hard-delete established records | Deny | Deny | Deny | Deny | D, UD-006/UD-014 |
 | Impersonate/inject sewing entry | Deny | Deny | Deny | Deny | Approved invariant |
 
-The first SYSTEM_ADMIN is manually bootstrapped through Supabase by an infrastructure operator. It is not created through public signup or the normal admin panel. UI restrictions above are enforced by server APIs as well.
+The first SYSTEM_ADMIN is privately bootstrapped through Supabase by an infrastructure operator using scripts/bootstrap-users.ts and ignored configuration, as explicitly authorized in G04. It is not created through public signup or the normal admin panel. UI restrictions above are enforced by server APIs as well.
 
 Approved UD-022 uses synchronous Auth-user creation followed by profile persistence. Profile failure attempts cleanup of only that newly created incomplete Auth identity and returns error. This rollback is not a hard-delete permission for established users or audit records.
 

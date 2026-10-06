@@ -2,6 +2,10 @@
 
 These rules implement the user's approved G00 boundary and future architecture. They do not authorize the next milestone.
 
+## Current authorized boundary
+
+The autonomous continuation request authorizes finalizing G04 and executing G05–G08 sequentially, including testing, commits, pushes, PRs and merges. G04's original stop boundary is historical. Read the approved contracts and UI design system before each feature. The user performs production deployment manually: do not deploy, configure a Vercel project or change DNS. G08 ends with a reproducible manual deployment guide and submission artifacts. Ignored .env/.env.local may be read/edited; credentials remain private.
+
 ## G00 stop condition
 
 **DESIGN DECISION (approved by user):** Documentation only. No application source, Next.js scaffold, package installation, migrations, cloud setup, database writes, seed execution, or deployment. Stop after the fifteen docs and consolidated decision register. All 26 UD directions are now approved; G01 still requires a subsequent explicit instruction. The user has separately authorized the initial documentation commit on a new branch and local merge into main.

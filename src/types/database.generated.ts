@@ -588,7 +588,48 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      admin_create_profile: {
+        Args: {
+          p_actor_id: string;
+          p_full_name: string;
+          p_request_id: string;
+          p_role: Database["public"]["Enums"]["app_role"];
+          p_user_id: string;
+        };
+        Returns: Json;
+      };
+      admin_list_audit: {
+        Args: {
+          p_actor_id: string;
+          p_cursor_id?: string;
+          p_cursor_time?: string;
+          p_limit?: number;
+        };
+        Returns: Json;
+      };
+      admin_list_users: {
+        Args: {
+          p_active?: boolean;
+          p_actor_id: string;
+          p_cursor_id?: string;
+          p_cursor_time?: string;
+          p_limit?: number;
+          p_role?: Database["public"]["Enums"]["app_role"];
+          p_search?: string;
+        };
+        Returns: Json;
+      };
+      admin_update_profile: {
+        Args: {
+          p_active?: boolean;
+          p_actor_id: string;
+          p_expected_revision: number;
+          p_request_id?: string;
+          p_role?: Database["public"]["Enums"]["app_role"];
+          p_user_id: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       admin_audit_action:

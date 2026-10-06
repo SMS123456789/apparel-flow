@@ -4,11 +4,11 @@
 
 ## G02 credential foundation
 
-**DESIGN DECISION (implementation detail):** NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are browser-safe. SUPABASE_SECRET_KEY is separately validated in a server-only module; legacy anon/service_role values map to the public/secret variables respectively. Browser, cookie-based user-context server, and stateless privileged factories are separate. The server factory propagates SSR cookie writes/cache headers to a writable response context and does not hide failures. Actual login, identity/role guards, session-refresh proxy, production RLS, and cloud Auth settings are deferred to their authorized milestones; local config disables signup. G02 connectivity uses trusted development-only read requests, never a public diagnostic API. See [G02 decisions](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions).
+**DESIGN DECISION (implementation detail):** NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are browser-safe. SUPABASE_SECRET_KEY is separately validated in a server-only module; legacy anon/service_role values map to the public/secret variables respectively. Browser, cookie-based user-context server, and stateless privileged factories are separate. The server factory propagates SSR cookie writes/cache headers to a writable response context and does not hide failures. G02 deferred login/guards/Proxy/cloud Auth settings; G04 now implements those identity features. Local and verified cloud settings disable signup; manufacturing RLS remains later work. G02 connectivity uses trusted development-only read requests, never a public diagnostic API. See [G02 decisions](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions).
 
 ## Identity and session
 
-G03 is a database-only foundation: all ten application tables have RLS enabled with no policies. PUBLIC/anon/authenticated table access is revoked; service_role is read-only. No production RPC exists and API roles cannot execute private trigger helpers or use the private numbering sequence. Database role values use the lowercase assessment identifiers plus system_admin; future API/application identifiers retain their documented uppercase representation. No Auth users/profiles are seeded, no signup/login/refresh/role guard is implemented, and cloud Auth settings remain future authentication work.
+Historically, G03 was a database-only foundation: all ten application tables have RLS enabled with no policies. PUBLIC/anon/authenticated table access is revoked; service_role is read-only. No production RPC exists and API roles cannot execute private trigger helpers or use the private numbering sequence. Database role values use the lowercase assessment identifiers plus system_admin; G04 API/application identifiers use their documented uppercase representation. G03 itself seeded no Auth identities/profiles and implemented no login/refresh/role guard. G04 changes only the narrow identity/admin boundaries described below.
 
 **DESIGN DECISION (approved UD-015/UD-025):** Supabase email/password authentication with cookie-based SSR session, real distinct demo accounts, public signup disabled. auth.users is authentication authority; public.profiles holds protected current role/activity/name. One role/user; no authority from editable user metadata or browser role switches.
 
@@ -18,11 +18,21 @@ ActorContext is constructed server-side from verified subject/current role/activ
 
 Missing/inactive profile denies app APIs and RLS data even if Auth still recognizes a valid JWT. This also prevents access by an incompletely provisioned account whose cleanup failed.
 
+## Implemented G04 session boundary
+
+Login/logout/me/demo are backend APIs. AuthRepository returns only id/email from verified getUser(); ProfileRepository reads the same subject through the JWT client and own-active-profile RLS. AuthService rejects missing/inactive/mismatched profiles; no metadata role or getSession object supplies authority. Controllers/services share exact requireUser/requireRole guards and sanitized HTTP translation. All private API responses carry request IDs and private,no-store headers. Mutations require an exact configured APP_ORIGIN, including login/demo/logout; missing/cross origins are forbidden.
+
+Next.js 16 src/proxy.ts calls getClaims for verified refresh and coarse unauthenticated page redirects only. Cookie refresh updates both request and response and preserves cookies/cache headers on redirects; API requests reach independent controllers rather than receiving login redirects. Cookies are HttpOnly, SameSite=Lax and Secure on HTTPS. Read-only Server Component clients rely on Proxy for writes; writable route clients propagate cookie failures and refresh headers. Role lookup is fresh for every protected API/page.
+
+The visible demo panel authenticates one of three allowlisted real accounts using server-held private credentials and checks its persisted production role. Each change signs out the previous local session, signs in a different Auth identity and performs full navigation. SYSTEM_ADMIN credentials are never exposed to the panel. DEMO_ACCOUNTS_ENABLED defaults false; the assessment environment explicitly enables it. Public signup is disabled in the cloud and there is no application signup endpoint.
+
+The two forward identity migrations add one own-active profiles SELECT policy and four service_role-only invoker admin gateways. Their restricted private definer owner can mutate only profiles/admin audit, never production/reference tables or Auth users. A private id/email projection avoids direct managed Auth schema grants. All direct API-role DML, authenticated admin RPC EXECUTE, trigger-helper EXECUTE and sequence access stay denied. Full grants and rationale are documented in [06](06_DATABASE_DESIGN.md#g04-identityadmin-access).
+
 ## Separate Supabase contexts
 
 | Context | Credential | Allowed use | Guards |
 |---|---|---|---|
-| Browser Auth client | Public project key/current session | Email/password login, logout/session only. | Real Auth; no application table/privileged commands. |
+| Browser | Same-origin HttpOnly cookie | Calls login/logout/demo and protected backend APIs. Existing public-only Supabase factory is unused by G04 UI. | No browser business queries or privileged client. |
 | Server identity/read client | Validated user JWT | Identity and repository RLS-scoped reads. | Controller role/activity; fixed permitted resource predicates. |
 | Server production command client | Backend-only elevated/restricted context | Approved transactional RPCs. | Service authority/rules; locked DB actor/creator/state/count rechecks. |
 | Server Auth admin adapter | Server-only service-role/secret | Create Auth user/cleanup incomplete creation and approved account operations. | Current SYSTEM_ADMIN/self/promotion guards; never browser call. |
@@ -56,13 +66,13 @@ Every child-row lookup inherits parent restrictions. Own-created order read acce
 
 **DESIGN DECISION (approved UD-010/UD-012):** Every count/approve/reject command verifies current CUTTING_VERIFIER and actor != cutting_orders.created_by even after reassignment. Controller/service enforce it, and locked RPC rechecks it. Wrong role or creator -> 403; hard stop -> 422; state/revision conflict -> 409.
 
-Browser JWTs cannot execute privileged commands. G03 implements default-deny grants and invoker-only private trigger helpers; no backend mutation gateway/approval RPC exists yet. Later workflow migrations review any command/helper grants. If a definer helper is required then, keep it private/unexposed with pinned search_path, qualified relations, controlled owner/EXECUTE; expose only a backend-credential invoker entry. [Supabase function security](https://supabase.com/docs/guides/database/functions).
+Browser JWTs cannot execute privileged commands. G03 implements default-deny grants and invoker-only private trigger helpers; G04 adds backend admin gateways only; no production approval RPC exists. Later workflow migrations review any command/helper grants. If a definer helper is required then, keep it private/unexposed with pinned search_path, qualified relations, controlled owner/EXECUTE; expose only a backend-credential invoker entry. [Supabase function security](https://supabase.com/docs/guides/database/functions).
 
 Internal actor_id is derived by trusted controller; only backend can supply it. A service-role request does not magically carry a user's auth.uid. The command must read protected active role and reject forged/inappropriate internal actors.
 
 ## Administrative identity and creation
 
-**DESIGN DECISION (approved UD-011/UD-022):** Manually create/bootstrap first admin through Supabase. Normal UI/API cannot create/promote another SYSTEM_ADMIN, self-deactivate/self-demote, or self-assign production. Guards protect direct API calls, not only hidden controls.
+**DESIGN DECISION (approved UD-011/UD-022):** Privately bootstrap the first admin through Supabase using the explicitly authorized G04 operator script. Normal UI/API cannot create/promote another SYSTEM_ADMIN, self-deactivate/self-demote, or self-assign production. Guards protect direct API calls, not only hidden controls.
 
 Creation inputs are email/full name/production role/temporary password. Backend Auth adapter creates Auth user; service/repository persist profile plus safe audit. Profile failure attempts cleanup of that newly created Auth user and returns error. Cleanup of incomplete creation is allowed; established users and audit are not hard-deleted. No invitation/durable operation/polling subsystem.
 

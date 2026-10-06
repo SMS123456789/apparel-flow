@@ -1,6 +1,14 @@
 # 11 - Test and verification plan
 
-**ASSESSMENT REQUIREMENT (section 10, p.4):** Automated domain/API/database proof of five core cases. **DESIGN DECISION (approved by user):** Vitest and Playwright. Everything below is a future test plan; no application suite exists or is executed during G00.
+**ASSESSMENT REQUIREMENT (section 10, p.4):** Automated domain/API/database proof of five core cases. **DESIGN DECISION (approved by user):** Vitest and Playwright. The matrix below is the approved full-system test plan. G00 executed no runtime tests; G01–G04 evidence is recorded separately in document 14. Passing G04 identity/admin checks does not complete manufacturing acceptance.
+
+## Current G04 verification
+
+Vitest uses pure schemas/guards, typed service adapters and actual Route Handler/controller integration with mocked external dependencies. It covers role isolation, profile activity, strict inputs, creation success/compensation/uncertainty, audit orchestration, safe errors/origin/no-store and Proxy cookie propagation; mocks do not claim cloud Auth/RLS correctness.
+
+Separate disposable PostgreSQL 17 tests run all actual migrations under a non-superuser operator and managed Auth namespace emulation. They verify own-active RLS, service-only gateways, restricted owner/grants, denied direct writes/production access, active-admin/self/promotion/stale guards and real audit-failure rollback. No cloud reset or manufacturing fixtures are used.
+
+Playwright uses all four real configured Supabase accounts, desktop/mobile Chromium, real persona replacement/logout/SSR refresh, API/page isolation and private admin dialogs/audit. Reversible role/activity changes are restored in finally blocks and append real audit. Traces are disabled so credentials/tokens do not enter artifacts; private admin login uses sanitized API transport rather than a password-bearing UI assertion. Browser screenshots/contrast/keyboard checks cover implemented G04 screens only. Bootstrap is run twice to verify idempotency and actual sign-in. Exact final results appear in [14](14_ARCHITECTURE_DECISIONS.md#g04-completion-evidence).
 
 ## Test levels and fixtures
 

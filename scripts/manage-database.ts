@@ -11,48 +11,10 @@ import {
   writeFileSync,
 } from "node:fs";
 
-import { getPublicEnv } from "@/lib/env/public";
+import { operatorDatabaseConnection } from "./lib/operator-database";
 
 // Operator tooling only. Application clients never use a Postgres password.
 nextEnv.loadEnvConfig(process.cwd(), true, { info: () => {}, error: () => {} });
-
-function databaseConnection() {
-  const env = getPublicEnv();
-  const projectRef = new URL(env.NEXT_PUBLIC_SUPABASE_URL).hostname.split(
-    ".",
-  )[0];
-  const url = new URL(
-    process.env.SUPABASE_DB_URL ??
-      `postgresql://postgres@db.${projectRef}.supabase.co:5432/postgres?sslmode=require`,
-  );
-  if (!["postgres:", "postgresql:"].includes(url.protocol)) {
-    throw new Error("Invalid SUPABASE_DB_URL protocol");
-  }
-  const password =
-    process.env.SUPABASE_DB_PASSWORD ??
-    process.env.db_password ??
-    (url.password ? decodeURIComponent(url.password) : undefined);
-  if (!password)
-    throw new Error(
-      "Missing SUPABASE_DB_PASSWORD (legacy db_password supported)",
-    );
-  // Keep the password out of process arguments and every CLI/error log.
-  url.password = "";
-  url.searchParams.set("sslmode", "require");
-  return {
-    url: url.toString(),
-    env: {
-      ...process.env,
-      PGPASSWORD: password,
-      PGHOST: url.hostname,
-      PGPORT: url.port || "5432",
-      PGUSER: decodeURIComponent(url.username) || "postgres",
-      PGDATABASE: url.pathname.slice(1) || "postgres",
-      PGSSLMODE: "require",
-      PGCONNECT_TIMEOUT: "10",
-    },
-  };
-}
 
 function run(
   command: string,
@@ -91,7 +53,7 @@ try {
       "Expected database tooling mode: list, plan, push, verify, types",
     );
   }
-  const connection = databaseConnection();
+  const connection = operatorDatabaseConnection();
   if (mode === "verify") {
     const expectedVersions = readdirSync("supabase/migrations")
       .filter((name) => /^\d{14}_.+\.sql$/.test(name))
@@ -140,6 +102,8 @@ try {
         'foreign_keys', (SELECT count(*) FROM pg_constraint k JOIN pg_namespace n ON n.oid = k.connamespace WHERE n.nspname = 'public' AND k.contype = 'f'),
         'checks', (SELECT count(*) FROM pg_constraint k JOIN pg_namespace n ON n.oid = k.connamespace WHERE n.nspname = 'public' AND k.contype = 'c'),
         'indexes', (SELECT count(*) FROM pg_indexes WHERE schemaname = 'public'),
+        'policies', (SELECT count(*) FROM pg_policies WHERE schemaname='public'),
+        'admin_gateways', (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('admin_list_users','admin_create_profile','admin_update_profile','admin_list_audit')),
         'triggers', (SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND NOT t.tgisinternal),
         'recipes', (SELECT count(*) FROM public.recipes),
         'recipe_components', (SELECT count(*) FROM public.recipe_components),
@@ -154,7 +118,7 @@ try {
       connection.env,
     );
     console.log(
-      "PASS remote catalog, constraints, enums, indexes, default-deny RLS/grants, private triggers and exact recipes",
+      "PASS remote catalog, constraints, enums, indexes, scoped identity/production default-deny RLS/grants, private triggers and exact recipes",
     );
     console.log(
       `PASS remote migration history matches local SQL: ${history.join(", ")}`,

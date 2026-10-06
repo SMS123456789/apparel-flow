@@ -1,16 +1,29 @@
-# 13 - Gated implementation roadmap
+# 13 - Chunked implementation roadmap
 
-**DESIGN DECISION (approved by user):** G00 ended at documentation and local Git work. Explicit G01/G02 requests authorized scaffolding/infrastructure; both are now merged. The subsequent G03 request authorizes schema, exact recipe seeds, remote migration application, generated types, and verification on a new branch. G04 and later work, user provisioning, application features, and deployment await separate instructions.
+**DESIGN DECISION (autonomous continuation request):** Finalize existing G04, then execute G05–G08 sequentially without intermediate approval. Each chunk must pass its required checks before commit/push/PR/merge and main synchronization. G08 prepares submission and DEPLOYMENT_GUIDE.md; production deployment is manual user action. No deployment has occurred.
 
-## G00 exit and implementation entry
+## Current execution plan
 
-G00 output is all fifteen documents, traceable assessment rules, approved architecture/interpretations, all 26 approved UD directions, an empty [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) register, and the authorized initial branch commit/local main merge.
+| Chunk | Scope | Exit evidence |
+|---|---|---|
+| G00 | Requirements and architecture documentation | Approved 26 UD directions, empty unresolved register, documentation commit 9b9a7a3 and local main merge. |
+| G01 | Next.js/TypeScript scaffold | Complete; commit 8bc0103, PR #1, main merge c8ec89b. Exact pins/tooling checks recorded in 14. |
+| G02 | Supabase infrastructure | Complete; commit fff5167, PR #2, main merge 0ec4879. Factories/environment/CLI/read-only connectivity verified. |
+| G03 | Domain schema, constraints and recipe seed | Complete; commit 1788109 including UI design documents, PR #3, main merge 97da2e7. Three migrations, ten tables/six enums, immutable evidence/default-deny grants, exact recipes, generated types and isolated/remote verification. |
+| G04 | Identity, Access & Admin | Complete; 112 Vitest tests, 17 Playwright passes (one deliberate duplicate viewport skip), five-migration SQL suite/75 expected-error assertions and all required quality checks passed. Real email/password Auth, SSR cookies/Proxy, active profiles/exact RBAC, strict APIs/errors, three real demo personas, four role shells, synchronous admin creation/compensation, role/activity/audit, operator bootstrap and narrow forward identity grants. Final results in 14; no manufacturing workflow. |
+| G05 | Cutting Supervisor Workflow | Supervisor-only order creation/preparation, bounded input validation, exact BOM multiplier/manifest, first-submit freezing, atomic submission and same-order re-cut preparation. Persistence, role/direct-API/RLS and transaction tests accompany implementation. |
+| G06 | Verification & Gatekeeper | Verifier queue/terminal, explicit Save Counts, null versus zero, GREEN/YELLOW/RED, RED/missing/uncounted hard stop, reasoned rejection, immutable attempts/sign-off, creator separation and locked transactions. All gate/race/rollback/security tests. |
+| G07 | Sewing & Full-System Hardening | Fixed VERIFIED-only queue/detail and Start Sewing fields retaining VERIFIED. End-to-end handoffs, re-cut, five assessment cases, direct database attacks, role/RLS review, responsive/contrast/accessibility audit and final system testing. |
+| G08 | Deployment & Submission | Manual DEPLOYMENT_GUIDE.md, README/setup/schema/evaluator access, honest four-section AI_OPTIMIZATION_REPORT with two real flawed-code examples, atomic public history and local evaluator simulation. LIVE DEPLOYMENT remains pending human action. |
 
-**DESIGN DECISION (approved by user):** Decisions are approved; schedule is not an architecture blocker. Separate G01/G02/G03 instructions have been received. Actual implementation evidence is recorded in [14](14_ARCHITECTURE_DECISIONS.md#g03-database-foundation-decisions). No approved item remains gated by the old proposal register. G03 stops before G04.
+Admin was explicitly included in the user's G04 chunk; it does not acquire production authority. G05–G07 retain the approved manufacturing rules: integer counts, positive fabric with at most three decimals, YELLOW allowed, warning-only cap, signed fabric variance, same-order/new immutable re-cut attempts and VERIFIED-preserving sewing start. There is no generic status override.
 
-## Future goals and acceptance gates
+## Historical milestone inventory
 
-Goal numbering preserves identifiers, not mandatory execution priority. Admin G08 is secondary and follows validation of core production/gate/handoff work. Contents/sequencing are **DESIGN DECISION (implementation plan)**; tests/security are integrated early instead of postponed to the end.
+The original G00 plan used G00–G28 identifiers. That schedule remains historical evidence below, not the active execution queue. Its original G04 seed follow-up was already folded into G03; the later explicit G04 request consolidates original authentication/profile/RBAC/admin/shell/testing work. References in old completion records retain their original meaning.
+
+<details>
+<summary>Original G00–G28 milestone table (historical)</summary>
 
 | Goal | Work | Exit evidence/dependencies |
 |---|---|---|
@@ -44,23 +57,13 @@ Goal numbering preserves identifiers, not mandatory execution priority. Admin G0
 | G27 | Root AI Optimization Report | Four required sections with at least two evidenced real flawed AI-code/refactor examples. |
 | G28 | Final evaluator simulation | Public atomic commits, tests, URL, persona demo, shortage gate, persisted handoff. |
 
-G18 audit is designed/implemented with G16 transaction, not added after a status-only approval. G22/G23 complete tests developed throughout earlier goals. G03 introduces default-deny RLS/grants, not premature role policies or approval RPCs. G21 revisits security introduced with the earlier schema/features.
 
-## Assessment's four-day schedule
+</details>
 
-**ASSESSMENT REQUIREMENT (section 13, p.5):**
+## Assessment schedule and gates
 
-| Relative day | Assessment milestone | Roadmap alignment |
-|---|---|---|
-| Day 1 | Architecture, database, repository, recipe seed, cloud skeleton | G00-G07/G04 and early deployment preparation; approved architecture used; package versions chosen/pinned during setup. |
-| Day 2 | Role switcher, order modal, multiplier, validation | G09-G12; continue integration checks. |
-| Day 3 | Verifier workspace, lights, server hard stop, rejection | G13-G18 with atomic/audit tests. |
-| Day 4 | Sewing, automated tests, contrast, AI report | G19-G28, submission and evaluator audit. |
+**ASSESSMENT REQUIREMENT (section 13, p.5):** Four days / 28–32 focused hours. Day 1 establishes architecture/database/repository/cloud foundations; day 2 covers persona access and cutting creation/multiplier; day 3 covers verifier/gate/rejection; day 4 covers sewing/tests/contrast/AI report. These are relative assessment days, not an invented calendar deadline.
 
-**DESIGN DECISION (approved by user, UD-024):** Four days/28-32 focused hours are the known assessment schedule. Scheduling is not an architecture blocker; admin work stays secondary to production/gate/RBAC/tests/contrast. Relative days do not invent a calendar deadline.
+**DESIGN DECISION (approved UD-024):** The known schedule does not block architecture. Admin remains secondary to core assessment outcomes even though the user requested it inside G04. Release requires all five core cases, durable gate/audit/RBAC evidence, UI verification and the mandatory submission artifacts. Current G04 authentication/admin success does not imply full assessment completion.
 
-## Risk-driven gates and evidence
-
-**DESIGN DECISION (implementation detail):** Implement the approved transactional/RLS/creator-separation safeguards before exposing mutations. Match approved numeric/fabric/reason semantics in forms/server schemas. Test same-order immutable re-cut and VERIFIED-preserving start. Test synchronous admin creation/cleanup after core work.
-
-Release requires proved gate/security/data integrity and all mandatory submission items; there are no remaining UD architecture blockers. Each milestone records actual changes and test evidence, not only a status label. No tests, migrations, setup, deployment, or G01 actions were performed by this G00 plan.
+Each chunk records actual checks/failures/fixes in [14](14_ARCHITECTURE_DECISIONS.md). [11](11_TEST_PLAN.md) preserves the full-system acceptance matrix. Applied SQL is immutable; any later database fix needs a forward migration. The continuation request explicitly authorizes the remaining chunks.

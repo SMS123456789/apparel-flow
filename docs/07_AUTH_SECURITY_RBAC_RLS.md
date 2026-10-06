@@ -106,3 +106,21 @@ Required direct supervisor approval is 403; RED/missing/uncounted is 422; sewing
 ## G05 implemented production boundary
 
 The G05 migration adds narrow SELECT grants/policies for active cutting-role catalog and active supervisor factory orders/children. Sewing/admin/inactive subjects receive no production/reference rows. Public cutting_create/cutting_edit/cutting_submit/cutting_recut are invoker-only and executable by service_role alone. Private commands recheck the locked actor's current cutting_supervisor role/activity and order revision/state. The production command owner cannot assign profile roles/activity, access Auth or administer accounts. API-role direct writes and command EXECUTE stay denied. Missing/foreign/empty inputs, trusted client state/identity/expected fields and generic status mutation are rejected at the server boundary.
+
+## Final G06–G07 production boundaries
+
+The approved read-policy table is now implemented. Active Verifier scope includes
+submitted history; active Sewing scope fixes VERIFIED and limits all attempt,
+count and evidence children to the current approved attempt/log. Sewing cannot
+read reference recipes/components or prior rejected evidence. Views use caller
+RLS. Admin remains isolated from all production data and commands.
+
+Only server repositories call eight named service-role production gateways;
+private commands recheck a locked active actor and the specific permitted role,
+state, revision and creator separation where applicable. No generic status or
+identity/timestamp arguments are accepted from browser JSON. Approval's complete
+manifest/count gate and immutable audit/status transaction, rejection reason,
+re-cut history and once-only sewing start are tested against real PostgreSQL.
+Race tests use two actual connections rather than promise ordering in mocks.
+Seven configured private values and credential variable markers were absent from
+the final G07 browser JS; raw secrets/provider responses are withheld from logs.

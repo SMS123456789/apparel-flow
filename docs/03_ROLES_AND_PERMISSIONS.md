@@ -15,9 +15,9 @@
 
 **DESIGN DECISION (approved by user, UD-010):** A user who created an order can never verify that order, even after reassignment to CUTTING_VERIFIER. This restriction applies to entering counts, approval, and rejection and is checked by backend guards/services and again inside transactional commands. History remains readable where the current role permits it; read access does not permit self-verification. SYSTEM_ADMIN cannot self-assign production privileges.
 
-## Current implementation: G04
+## Current implementation: G04–G07
 
-The canonical server identity comes from Auth getUser() plus the matching active profiles row. requireUser/requireRole use exact role membership with no inheritance. Every admin controller and service independently guards SYSTEM_ADMIN; every role page checks its current role. Admin can list/create production users, change production role/activity and read audit. Other permissions in the matrix are the approved future manufacturing contract; G04 provides role shells only. Existing JWTs are denied after deactivation and reflect the current role after reassignment.
+The canonical server identity comes from Auth getUser() plus the matching active profiles row. requireUser/requireRole use exact role membership with no inheritance. Every admin controller and service independently guards SYSTEM_ADMIN; every role page checks its current role. Admin can list/create production users, change production role/activity and read audit. The full cutting, verification and sewing permissions in the matrix are implemented, including factory history and approved-only sewing child evidence. Existing JWTs are denied after deactivation and reflect the current role after reassignment.
 
 ## Capability matrix
 

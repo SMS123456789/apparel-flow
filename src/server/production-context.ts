@@ -1,4 +1,6 @@
 import "server-only";
+import { SewingService } from "@/server/services/sewing-service";
+import { SupabaseSewingRepository } from "@/server/repositories/sewing-repository";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { SupabaseRecipeRepository } from "@/server/repositories/recipe-repository";
@@ -26,5 +28,14 @@ export async function createVerificationService(headers: Headers) {
   return new VerificationService(
     new SupabaseOrderRepository(read, command),
     new SupabaseVerificationRepository(command),
+  );
+}
+
+export async function createSewingService(headers: Headers) {
+  return new SewingService(
+    new SupabaseSewingRepository(
+      await createServerSupabaseClient(headers),
+      createAdminSupabaseClient(),
+    ),
   );
 }

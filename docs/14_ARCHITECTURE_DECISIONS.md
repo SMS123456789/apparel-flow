@@ -372,3 +372,68 @@ E2E-VERIFICATION/E2E-RECUT fixtures remain as attributable no-delete history.
 Final G06 full Playwright regression: 21 passed, one duplicate viewport review
 skipped. All required checks passed before committing. G05 was merged by PR #5,
 main 3845efa; G06 is complete and proceeds to merge and G07.
+
+## G07 sewing and system hardening
+
+G06 was merged as PR #6, commit 380afce, main 349ab61. G07 adds a
+security-invoker sewing_batches projection with a fixed VERIFIED predicate,
+approved attempt/log linkage, exact numeric text and active Sewing identity.
+The repository fixes VERIFIED again before search/cursor pagination; strict APIs
+accept no status/include-unapproved filter. Sewing child policies reveal only the
+approved attempt/items/log/log-items, including for verified re-cuts. Reference
+catalog reads remain denied. Recipe code/name are now frozen with each submitted
+attempt; existing new label columns were populated from immutable seeded recipes
+under the migration table lock, without altering existing decision/count/fabric
+facts. Subsequent attempts copy the first attempt labels.
+
+The backend-only sewing_start command rechecks locked current actor, verified
+order, approved evidence and revision, then sets the existing started_by and
+sewing_started_at fields exactly once while retaining VERIFIED. The SQL suite
+proves repeat/stale/wrong-role/inactive failures and immutable start attribution.
+A real two-session start race yields one commit and one 40001 conflict. All eight
+migrations and the cloud catalog/types match. 215 Vitest tests cover all five
+assessment cases, role isolation, strict DTOs, origin enforcement and persistence
+boundaries; SQL exercises actual storage and RLS separately.
+
+During local migration validation an unqualified status inside a correlated
+policy resolved against the order rather than its attempt and failed with an
+invalid enum value. Both outer id/status references were explicitly qualified
+before cloud application, and Sewing child/RLS tests now cover the rejected-to-
+approved case. A synthetic SQL fixture also needed its own INSERT grant for the
+service test role; only that disposable fixture was changed, not application
+write grants.
+
+Security review: no generic status route, browser identity/time authority, admin
+production permission, recipe writes or direct authenticated DML/RPC execution.
+Seven configured private values are absent from 183 repository files and 507
+built JS files (21 browser files). npm audit --omit=dev reports zero findings.
+Full npm audit still reports nine high development-tool dependency findings
+rooted in braces <=3.0.3. The reviewed upstream advisory lists no patched version;
+npm proposes breaking tool downgrades, so pinned compatible tooling is retained.
+This is a known build-tool limitation, not a clean full dependency audit:
+[GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
+
+Real cloud browser journeys now cover both three-persona handoffs: create/submit,
+all GREEN approval, approved-only sewing detail/start/reload; and saved zero/RED,
+direct approval 422, rejection, re-cut/resubmit, fresh null counts, YELLOW approval
+and approved-only sewing/start/reload. A competing count save invalidates approval
+with 409; the UI retains local entries on reload and requires explicit Save Counts
+before signing again. Arbitrary sewing status filters return 422 and pending/
+rejected IDs return 404. Wrong-role manufacturing/admin routes remain 403.
+
+Production controls were measured for text >=4.5:1 and boundary >=3:1, including
+invalid counts, disabled approval, focus, selected recipe and normal numeric/text
+fields. Count fields are 16px/40px desktop and 44px on mobile/coarse pointers.
+Review sizes 1280/768/375/320, 200% text enlargement, dialog keyboard containment,
+reason-error focus, Enter safety and no whole-page overflow pass. Desktop/mobile
+sewing and verifier screenshots were inspected; two-dimensional tables retain
+labeled keyboard-scroll regions. An initial test incorrectly expected touch
+height for a tablet-width mouse viewport; it was aligned to the approved pointer/
+mobile contract rather than changing the UI contract. No design override used.
+
+Final G07 regression: npm ci, typecheck, lint, format, 215 Vitest tests,
+23 Playwright passes (one deliberate duplicate viewport skip), eight-migration
+SQL suite/four actual connection races, cloud catalog/type generation and separate
+production build pass. Repeated bootstrap verifies signup disabled and all four
+real active accounts without resetting credentials. G07 is complete and proceeds
+to merge; G08 prepares submission and manual deployment documentation only.

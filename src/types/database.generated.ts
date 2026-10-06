@@ -319,7 +319,9 @@ export type Database = {
           fabric_roll_id_snapshot: string;
           id: string;
           order_id: string;
+          recipe_code_snapshot: string;
           recipe_id: string;
+          recipe_name_snapshot: string;
           revision: number;
           status: Database["public"]["Enums"]["verification_attempt_status"];
           std_fabric_yards_snapshot: number;
@@ -337,7 +339,9 @@ export type Database = {
           fabric_roll_id_snapshot: string;
           id?: string;
           order_id: string;
+          recipe_code_snapshot: string;
           recipe_id: string;
+          recipe_name_snapshot: string;
           revision?: number;
           status?: Database["public"]["Enums"]["verification_attempt_status"];
           std_fabric_yards_snapshot: number;
@@ -355,7 +359,9 @@ export type Database = {
           fabric_roll_id_snapshot?: string;
           id?: string;
           order_id?: string;
+          recipe_code_snapshot?: string;
           recipe_id?: string;
+          recipe_name_snapshot?: string;
           revision?: number;
           status?: Database["public"]["Enums"]["verification_attempt_status"];
           std_fabric_yards_snapshot?: number;
@@ -599,6 +605,47 @@ export type Database = {
       };
     };
     Views: {
+      sewing_batches: {
+        Row: {
+          actual_fabric_yds: string | null;
+          attempt_id: string | null;
+          created_at: string | null;
+          expected_fabric_yds: string | null;
+          fabric_roll_id_snapshot: string | null;
+          id: string | null;
+          log_id: string | null;
+          order_no: string | null;
+          recipe_code_snapshot: string | null;
+          recipe_name_snapshot: string | null;
+          revision: number | null;
+          sewing_started_at: string | null;
+          started_by: string | null;
+          status: Database["public"]["Enums"]["production_status"] | null;
+          target_qty: number | null;
+          updated_at: string | null;
+          verified_at: string | null;
+          verifier_id: string | null;
+          verifier_name_snapshot: string | null;
+          wastage_cap_pct: string | null;
+          wastage_pct: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cutting_orders_started_by_fkey";
+            columns: ["started_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "verification_logs_verifier_id_fkey";
+            columns: ["verifier_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       verification_evidence: {
         Row: {
           actual_fabric_yds: string | null;
@@ -729,6 +776,10 @@ export type Database = {
         Returns: string;
       };
       cutting_submit: {
+        Args: { p_actor_id: string; p_order_id: string; p_revision: number };
+        Returns: string;
+      };
+      sewing_start: {
         Args: { p_actor_id: string; p_order_id: string; p_revision: number };
         Returns: string;
       };

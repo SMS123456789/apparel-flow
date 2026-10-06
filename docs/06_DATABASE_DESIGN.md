@@ -4,6 +4,10 @@
 
 Logical columns, constraints, indexes, and command internals are implementation details under approved decisions, not executable DDL or reopened architecture blockers.
 
+## G02 migration foundation
+
+**DESIGN DECISION (implementation detail):** Every application database/schema change must be represented by a version-controlled Supabase SQL migration. The pinned CLI initializes supabase/config.toml; G02 creates no migration, seed, business table, or generated Database type. Cloud is the primary target. Login/link/review/dry-run/push and optional local reset/type-generation commands are documented in [README](../README.md#supabase-migration-workflow). Dashboard inspection and project configuration are allowed; application schema must remain reproducible from the repository. Schema/grants/RLS/RPC implementation starts only with separately authorized G03.
+
 ## Assessment mapping
 
 | Assessment entity | Representation |

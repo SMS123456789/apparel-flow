@@ -1,12 +1,12 @@
 # 13 - Gated implementation roadmap
 
-**DESIGN DECISION (approved by user):** G00 ended at documentation and authorized local Git work. The subsequent explicit G01 request authorizes scaffolding on a new branch. Later goals remain a plan, not authorization to migrate, seed, provision, or deploy.
+**DESIGN DECISION (approved by user):** G00 ended at documentation and authorized local Git work. The subsequent G01 request authorized scaffolding on a new branch; the explicit G02 request authorized merging G01 and integrating Supabase infrastructure on its own branch. G03 and later goals remain a plan, not authorization to migrate, seed, provision users, or deploy.
 
 ## G00 exit and implementation entry
 
 G00 output is all fifteen documents, traceable assessment rules, approved architecture/interpretations, all 26 approved UD directions, an empty [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) register, and the authorized initial branch commit/local main merge.
 
-**DESIGN DECISION (approved by user):** Decisions are approved; schedule is not an architecture blocker. The separate explicit G01 instruction has now been received. Compatible package versions/configuration are recorded in [14](14_ARCHITECTURE_DECISIONS.md#g01-scaffold-decisions). No approved item remains gated by the earlier proposal register. G01 stops before G02.
+**DESIGN DECISION (approved by user):** Decisions are approved; schedule is not an architecture blocker. Separate G01 and G02 instructions have now been received. Compatible package versions/configuration are recorded in [14](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions). No approved item remains gated by the earlier proposal register. G02 stops before G03.
 
 ## Future goals and acceptance gates
 
@@ -15,8 +15,8 @@ Goal numbering preserves identifiers, not mandatory execution priority. Admin G0
 | Goal | Work | Exit evidence/dependencies |
 |---|---|---|
 | G00 | Requirements/architecture docs | Documentation review complete; no implementation. |
-| G01 | Next.js/TypeScript repository scaffold | Complete on chore/g01-nextjs-scaffold; exact versions pinned. Install/typecheck/lint/format/unit/E2E/build/boot checks passed; evidence in 14. Future directories documented without placeholders. G02 not started. |
-| G02 | Supabase local/cloud configuration | Configure implementation environments/Auth URLs/secrets safely; no accidental shared demo/production data. |
+| G01 | Next.js/TypeScript repository scaffold | Complete; commit 8bc0103 merged into main through PR #1, merge c8ec89b. Exact versions pinned and all required scaffold checks passed; evidence in 14. |
+| G02 | Supabase infrastructure foundation | Implemented on chore/g02-supabase-foundation: split environment validation, browser/user-context/privileged factories, pinned CLI/configuration, migration conventions, and read-only cloud connectivity. Required checks and security evidence in 14. No application SQL, seeds, auth flow, or RLS policies. |
 | G03 | Reviewed database migrations | Implement/review schema/FKs/grants/RLS/RPC within approved identity/transaction direction before execution. |
 | G04 | Exact recipe seeds | Both five-component assessment BOMs; repeatable seeds, no invented images. |
 | G05 | Supabase authentication | Verified server identity/session flow; three actual test personas. |

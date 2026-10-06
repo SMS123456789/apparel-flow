@@ -1,6 +1,10 @@
 # 07 - Authentication, security, RBAC, and RLS
 
-**DESIGN DECISION (approved by user):** Supabase Auth authenticates, backend RBAC authorizes, RLS provides defense in depth. Frontend is not a security boundary. Never expose SUPABASE_SERVICE_ROLE_KEY or browser-held elevated privileges.
+**DESIGN DECISION (approved by user):** Supabase Auth authenticates, backend RBAC authorizes, RLS provides defense in depth. Frontend is not a security boundary. Never expose SUPABASE_SECRET_KEY (including a legacy service_role value) or browser-held elevated privileges.
+
+## G02 credential foundation
+
+**DESIGN DECISION (implementation detail):** NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are browser-safe. SUPABASE_SECRET_KEY is separately validated in a server-only module; legacy anon/service_role values map to the public/secret variables respectively. Browser, cookie-based user-context server, and stateless privileged factories are separate. The server factory propagates SSR cookie writes/cache headers to a writable response context and does not hide failures. Actual login, identity/role guards, session-refresh proxy, production RLS, and cloud Auth settings are deferred to their authorized milestones; local config disables signup. G02 connectivity uses trusted development-only read requests, never a public diagnostic API. See [G02 decisions](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions).
 
 ## Identity and session
 

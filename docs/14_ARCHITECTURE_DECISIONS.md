@@ -2,7 +2,7 @@
 
 Classification follows [00](00_PROJECT_CHARTER.md). Assessment source: the supplied six-page Webtezza challenge, sections 1-16. User sources: the original G00 request and the subsequent decision-approval table. External references validate feasibility, not add manufacturing requirements.
 
-**Approval recorded:** 2026-10-06, Asia/Colombo, by the user in this conversation. The decision table approved 25 directions; the subsequent admin-creation clarification approves UD-022. All 26 decisions are now approved and removed from UNRESOLVED_DECISIONS. G00 documentation/local Git work is complete. The subsequent G01 request authorizes scaffolding on a new branch and explicitly stops before G02.
+**Approval recorded:** 2026-10-06, Asia/Colombo, by the user in this conversation. The decision table approved 25 directions; the subsequent admin-creation clarification approves UD-022. All 26 decisions are now approved and removed from UNRESOLVED_DECISIONS. G00 documentation/Git work and G01 scaffolding are complete. The subsequent explicit G02 request authorizes merging G01 and Supabase infrastructure on a separate branch; it stops before G03.
 
 ## Captured architecture decisions
 
@@ -104,7 +104,7 @@ Approved Next.js/TypeScript/Supabase/Vercel fits the permitted assessment stack.
 
 ## UNRESOLVED_DECISIONS
 
-None. All 26 historical decisions have approved directions recorded above. G01 package versions are now selected/pinned below, and the assessment schedule is not an architecture blocker. Only G01 scaffold work is currently authorized; subsequent implementation still requires its separately requested milestone.
+None. All 26 historical decisions have approved directions recorded above. G01/G02 package versions are selected/pinned below, and the assessment schedule is not an architecture blocker. G02 infrastructure is currently authorized; G03 and later implementation still require their separately requested milestones.
 
 ## G00 completion record
 
@@ -154,4 +154,49 @@ Verified locally on 2026-10-06 using Node 22.23.2/npm 10.9.8. These checks cover
 | npm audit --omit=dev | Zero production vulnerabilities. Full audit has nine development-only high findings; not represented as a clean audit. |
 | Scope/link/Git review | All fifteen docs retained, twelve unchanged; local Markdown links valid; no business APIs, Supabase wiring, secrets, migrations, fake auth, or placeholder files. git diff --check passed. |
 
-The branch contains 23 new scaffold/configuration/test files and modifications only to documents 00, 13, and 14. No G01 commit, main merge, push, deployment, or G02 was performed. The user requested a new branch; G01 does not automatically authorize a commit. No blocking scaffolding decisions or failed required checks remain.
+At the end of the original G01 turn, the branch contained 23 new scaffold/configuration/test files and modifications only to documents 00, 13, and 14; no commit, merge, push, deployment, or G02 had been performed then. No blocking scaffolding decisions or failed required checks remained.
+
+### Subsequent G01 merge
+
+The user committed G01 as 8bc0103a6b7fd325601918af131b700d5e8904b5. Their subsequent G02 request explicitly authorized creating and merging the previous PR first. [PR #1](https://github.com/SMS123456789/apparel-flow/pull/1) was created and merged on 2026-10-06, producing main merge c8ec89bc958bb2ec1d45d227e49148ad6d798c7f. Local main and chore/g02-supabase-foundation were fast-forwarded to that merge; G01 history was preserved.
+
+## G02 Supabase foundation decisions
+
+**DESIGN DECISION (implementation detail under the explicit G02 request):** Infrastructure is implemented on chore/g02-supabase-foundation, based on the G01 merge. Approved manufacturing/admin decisions are unchanged. No G03 schema, auth feature, RBAC/RLS policy, business API, seed, user creation, deployment, or cloud mutation belongs to G02.
+
+| ID | Concrete infrastructure choice and rationale |
+|---|---|
+| ADR-023 | Exact application pins: @supabase/supabase-js 2.117.2, @supabase/ssr 0.12.7, server-only 0.0.1. Development pins: supabase CLI 2.119.0, @next/env 16.3.8 matching Next, and tsx 4.23.15 for the TypeScript diagnostic script. npm ci and the existing Node/npm conventions remain authoritative. |
+| ADR-024 | Split Zod environment validation: public URL/publishable key only, separate server-only SUPABASE_SECRET_KEY. Reject privileged keys in the public field; strip unrelated fields; report invalid/missing variable names without values. Validate lazily so home/offline checks need no live credentials. Legacy anon/service_role values map to the current public/secret variables without becoming user-identity authority. The configured ignored .env legacy variable was renamed locally, preserving its value. |
+| ADR-025 | Browser factory uses SSR createBrowserClient and only public configuration. Async server factory awaits cookies(), creates one user-context client per request, writes cookies, and forwards SSR cache headers to the caller's Headers. The caller must include those headers in its response. Cookie-write errors propagate; writable Route Handler/Server Action use is supported. Read-only rendering and refresh proxy integration wait for G05 because no authenticated pages/session workflow exists yet. |
+| ADR-026 | Privileged factory and server env import server-only. Privileged auth persistence, refresh, and URL-session detection are disabled. Both server factories fetch with no-store. Elevated access is reserved for future authorized backend adapters/repositories; it does not grant application roles or replace service authorization/RLS-scoped reads. No factory is invoked by the current home page. |
+| ADR-027 | CLI-generated supabase/config.toml establishes a cloud-first migration workflow. Every application schema change must have version-controlled SQL; review migration state and dry-run before a separately authorized push. No fake migration/directory, SQL, seed, or Database type is created. Optional local Docker stack is not adopted in G02. Local config disables signup, seeds, and implicit table exposure; PostgreSQL 17 is the generated default and must match cloud before local migration tests. Local config does not change cloud Auth settings. |
+| ADR-028 | npm run supabase:check uses Next env loading, public-key GET Auth health, privileged-key GET Data API OpenAPI metadata, and one read-only SDK Auth user-list call. It prints only controlled status/variable-name errors, never bodies/users/credentials. No public health route, tables, records, users, schema mutations, or RLS weakening. CLI login/linking and generated types remain future operator/G03 work. |
+
+Implementation follows current primary guidance: [SSR factories/cookies](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [API-key terminology and legacy mapping](https://supabase.com/docs/guides/getting-started/api-keys), [SDK client initialization](https://supabase.com/docs/reference/javascript/initializing), [CLI setup](https://supabase.com/docs/guides/local-development/cli/getting-started), and [migration workflow](https://supabase.com/docs/guides/deployment/database-migrations).
+
+The initial public-key OpenAPI probe received HTTP 401. Supabase's [current OpenAPI access change](https://supabase.com/changelog/42949-breaking-change-removing-access-to-openapi-spec-via-the-anon-key) requires a secret/service credential for that metadata endpoint. The trusted diagnostic now uses that supported credential, while Auth health retains the public key. This is an infrastructure read, not a production data/RLS bypass or an architecture change. All three real checks then passed without displaying returned data.
+
+No business-rule or architecture deviations were introduced. CLI operator login/linking is not configured, and no local Docker stack is available; these optional workflows do not block the verified cloud API foundation. G03 remains separately authorized work.
+
+### G02 completion evidence
+
+Verified locally on 2026-10-06 using Node 22.23.2/npm 10.9.8. Infrastructure unit tests use mocks/synthetic configuration and do not call the live project. The separate diagnostic uses the configured ignored environment.
+
+| Check | Actual result |
+|---|---|
+| npm ci | Passed fresh installation; all 27 exact direct pins match lockfile. Existing development-only audit/EOL limitations remain. |
+| npm run typecheck | Passed Next.js route generation and strict TypeScript without errors. |
+| npm run lint | Passed with zero errors/warnings. |
+| npm run format:check | Passed all matched files; numbered-doc formatting preserved. |
+| npm test | Three files, 24 tests passed: two existing class-utility tests and 22 environment/factory cases. Initial malformed URL test exposed a raw URL-parser error; validation was fixed and the complete suite rerun successfully. |
+| npm run test:e2e | Production build and both desktop/mobile Chromium home tests passed. Production server returned HTTP 200 with no page errors/overflow and stopped after tests. |
+| npm run build | Separate final production build passed; only home and not-found routes exist. |
+| npm run supabase:check | Auth health HTTP 200; privileged Data API OpenAPI metadata HTTP 200; privileged SDK Auth read succeeded. No response bodies/users displayed and no mutations performed. |
+| Supabase CLI/config | Version 2.119.0 and actual command help verified; config parses, migration support enabled, signup/seeds/implicit table exposure disabled. No SQL files. Local status returned exit 1 because Docker is unavailable; whoami returned exit 1 because operator login is not configured. No start/link/push/reset executed. |
+| Browser/server guard | Temporary Client Component importing the privileged factory made Next.js reject server-only imports as expected; probe removed before final build/tests. Unit mocks do not weaken the actual build safeguard. |
+| Credential audit | .env/.env.local ignored and untracked; .env.example placeholders only. Configured server key/database password absent from all trackable files, Git diff, and 45 generated JavaScript files; nine browser JavaScript files contain no secret-variable references. No elevated secrets logged. |
+| npm audit --omit=dev; full audit | Production audit passed with zero vulnerabilities. Full audit still reports nine high development-tooling findings inherited from G01; not claimed clean. |
+| Scope/docs/Git | README and all fifteen numbered documents have valid local links/anchors. No business calls/APIs/tables, auth feature/proxy, fake sessions/roles, generated Database type, or placeholder migrations. git diff --check passed. |
+
+G02 changes comprise eleven new infrastructure/config/test files and ten modified template/package/test/documentation files, suitable for one focused commit. The ignored local .env update is excluded from Git. G02 remains uncommitted on chore/g02-supabase-foundation; the request to create/merge the previous G01 PR has been completed separately. No required checks remain failed and no G02 blockers remain. **G02 COMPLETE — READY FOR G03**, stopping before schema/auth/business implementation.

@@ -1,12 +1,12 @@
 # 13 - Gated implementation roadmap
 
-**DESIGN DECISION (approved by user):** G00 ended at documentation and authorized local Git work. The subsequent G01 request authorized scaffolding on a new branch; the explicit G02 request authorized merging G01 and integrating Supabase infrastructure on its own branch. G03 and later goals remain a plan, not authorization to migrate, seed, provision users, or deploy.
+**DESIGN DECISION (approved by user):** G00 ended at documentation and local Git work. Explicit G01/G02 requests authorized scaffolding/infrastructure; both are now merged. The subsequent G03 request authorizes schema, exact recipe seeds, remote migration application, generated types, and verification on a new branch. G04 and later work, user provisioning, application features, and deployment await separate instructions.
 
 ## G00 exit and implementation entry
 
 G00 output is all fifteen documents, traceable assessment rules, approved architecture/interpretations, all 26 approved UD directions, an empty [UNRESOLVED_DECISIONS](14_ARCHITECTURE_DECISIONS.md#unresolved_decisions) register, and the authorized initial branch commit/local main merge.
 
-**DESIGN DECISION (approved by user):** Decisions are approved; schedule is not an architecture blocker. Separate G01 and G02 instructions have now been received. Compatible package versions/configuration are recorded in [14](14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions). No approved item remains gated by the earlier proposal register. G02 stops before G03.
+**DESIGN DECISION (approved by user):** Decisions are approved; schedule is not an architecture blocker. Separate G01/G02/G03 instructions have been received. Actual implementation evidence is recorded in [14](14_ARCHITECTURE_DECISIONS.md#g03-database-foundation-decisions). No approved item remains gated by the old proposal register. G03 stops before G04.
 
 ## Future goals and acceptance gates
 
@@ -16,9 +16,9 @@ Goal numbering preserves identifiers, not mandatory execution priority. Admin G0
 |---|---|---|
 | G00 | Requirements/architecture docs | Documentation review complete; no implementation. |
 | G01 | Next.js/TypeScript repository scaffold | Complete; commit 8bc0103 merged into main through PR #1, merge c8ec89b. Exact versions pinned and all required scaffold checks passed; evidence in 14. |
-| G02 | Supabase infrastructure foundation | Implemented on chore/g02-supabase-foundation: split environment validation, browser/user-context/privileged factories, pinned CLI/configuration, migration conventions, and read-only cloud connectivity. Required checks and security evidence in 14. No application SQL, seeds, auth flow, or RLS policies. |
-| G03 | Reviewed database migrations | Implement/review schema/FKs/grants/RLS/RPC within approved identity/transaction direction before execution. |
-| G04 | Exact recipe seeds | Both five-component assessment BOMs; repeatable seeds, no invented images. |
+| G02 | Supabase infrastructure foundation | Complete; commit fff5167 merged through PR #2, merge 0ec4879. Environment/client/CLI/connectivity checks passed; historical evidence in 14. |
+| G03 | Database schema, constraints and recipe seed | Three migrations applied to cloud PostgreSQL 17.11; ten tables, six enums, restrictive FKs/CHECKs, default-deny RLS/grants, immutable evidence triggers, exact BOMs, CLI-generated types and isolated/remote verification. No approval/rejection RPC or application feature. Evidence in 14. |
+| G04 | Exact recipe seed follow-up | The explicit G03 request includes both five-component BOM seeds, covering the original reference-data requirement here. A separate G04 request is still required before further work. |
 | G05 | Supabase authentication | Verified server identity/session flow; three actual test personas. |
 | G06 | Profiles/current roles | Protected role/activity, missing-profile deny, bootstrap approved. |
 | G07 | Server authorization/errors/validation | Thin controllers/router, strict schemas, 401/403/404 model, no client authority. |
@@ -35,7 +35,7 @@ Goal numbering preserves identifiers, not mandatory execution priority. Admin G0
 | G18 | Immutable sign-off | Exact verifier/time/component/fabric evidence; no app overwrite/delete; audit joins safe. |
 | G19 | Sewing Queue | Fixed database VERIFIED filter and child/detail isolation; all nonsewing personas denied. |
 | G20 | Start Sewing | Set sewing_started_at/started_by, retain VERIFIED/queue visibility; repeat/concurrent start checked. |
-| G21 | RLS/grant hardening review | Review policies already introduced at G03; direct DB/RPC attacks fail. Not the first security implementation. |
+| G21 | RLS/grant hardening review | Review default-deny RLS/grants introduced at G03 and scoped policies/commands added with later authentication/features; direct DB/RPC attacks fail. Not the first security implementation. |
 | G22 | Unit/API/database integration completion | Five assessment cases and adversarial/concurrency/rollback suite pass against real persistence. |
 | G23 | Playwright journeys | Three persona handoffs, reload, errors, counts/re-cut/admin as applicable. |
 | G24 | Contrast/accessibility/responsive audit | Inputs/dropdowns/all states; keyboard/focus; measured approved target. |
@@ -44,7 +44,7 @@ Goal numbering preserves identifiers, not mandatory execution priority. Admin G0
 | G27 | Root AI Optimization Report | Four required sections with at least two evidenced real flawed AI-code/refactor examples. |
 | G28 | Final evaluator simulation | Public atomic commits, tests, URL, persona demo, shortage gate, persisted handoff. |
 
-G18 audit is designed/implemented with G16 transaction, not added after a status-only approval. G22/G23 complete tests developed throughout earlier goals. G21 revisits RLS; deferring initial RLS until then would violate the architecture.
+G18 audit is designed/implemented with G16 transaction, not added after a status-only approval. G22/G23 complete tests developed throughout earlier goals. G03 introduces default-deny RLS/grants, not premature role policies or approval RPCs. G21 revisits security introduced with the earlier schema/features.
 
 ## Assessment's four-day schedule
 

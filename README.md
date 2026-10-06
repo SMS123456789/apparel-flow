@@ -4,11 +4,13 @@ Cutting Operations & Gatekeeper Verification Terminal. The future application
 will enforce the cutting-to-sewing verification checkpoint described in the
 [project specification](docs/00_PROJECT_CHARTER.md).
 
-**Current stage: G02 Supabase infrastructure.** G01 was merged through
-[PR #1](https://github.com/SMS123456789/apparel-flow/pull/1). Environment validation,
-separate Supabase factories, CLI configuration, and read-only cloud connectivity
-checks are present. Application tables, authentication flows, RBAC/RLS policies,
-business APIs, and production features belong to later milestones.
+**Current stage: G03 database foundation.** G01/G02 were merged through
+[PR #1](https://github.com/SMS123456789/apparel-flow/pull/1) and
+[PR #2](https://github.com/SMS123456789/apparel-flow/pull/2). Three migrations now
+establish the cloud schema and exact assessment recipes, with default-deny RLS,
+immutable evidence protection, generated types, and database verification.
+Authentication flows, role policies, approval RPCs, business APIs, and production
+UI remain later milestones. G03 stops before G04.
 
 ## Stack and setup
 
@@ -36,20 +38,26 @@ check script. Do not commit credentials.
 
 ## Commands
 
-| Command                   | Purpose                                                     |
-| ------------------------- | ----------------------------------------------------------- |
-| `npm run dev`             | Development server                                          |
-| `npm run build`           | Production build                                            |
-| `npm run start`           | Serve the existing production build                         |
-| `npm run lint`            | ESLint with zero allowed warnings                           |
-| `npm run typecheck`       | Generate Next.js route types, then strict TypeScript check  |
-| `npm run format`          | Format scaffold files; preserve existing numbered docs      |
-| `npm run format:check`    | Check scaffold formatting                                   |
-| `npm test`                | Vitest unit/integration tests; no browsers                  |
-| `npm run test:watch`      | Vitest watch mode                                           |
-| `npm run test:e2e`        | Build and run Chromium desktop/mobile home-page smoke tests |
-| `npm run supabase:check`  | Read-only cloud Auth/Data API connectivity verification     |
-| `npm run supabase:status` | Inspect an optional local Supabase stack                    |
+| Command                          | Purpose                                                               |
+| -------------------------------- | --------------------------------------------------------------------- |
+| `npm run dev`                    | Development server                                                    |
+| `npm run build`                  | Production build                                                      |
+| `npm run start`                  | Serve the existing production build                                   |
+| `npm run lint`                   | ESLint with zero allowed warnings                                     |
+| `npm run typecheck`              | Generate Next.js route types, then strict TypeScript check            |
+| `npm run format`                 | Format scaffold files; preserve existing numbered docs                |
+| `npm run format:check`           | Check scaffold formatting                                             |
+| `npm test`                       | Vitest unit/integration tests; no browsers                            |
+| `npm run test:watch`             | Vitest watch mode                                                     |
+| `npm run test:e2e`               | Build and run Chromium desktop/mobile home-page smoke tests           |
+| `npm run supabase:check`         | Read-only cloud Auth/Data API connectivity verification               |
+| `npm run supabase:status`        | Inspect an optional local Supabase stack                              |
+| `npm run test:db`                | Validate migrations/constraints/immutability in disposable PostgreSQL |
+| `npm run supabase:remote:list`   | Inspect cloud/local migration versions using ignored operator config  |
+| `npm run supabase:remote:plan`   | Dry-run unapplied cloud migrations                                    |
+| `npm run supabase:remote:push`   | Apply reviewed version-controlled cloud migrations                    |
+| `npm run supabase:schema:verify` | Read-only cloud catalog, RLS/grant and recipe assertions              |
+| `npm run supabase:types`         | Atomically generate/format public-schema TypeScript definitions       |
 
 Before E2E tests, install the matching browser once:
 
@@ -96,11 +104,16 @@ src/
   lib/env/{keys.ts,public.ts,server.ts}
   lib/supabase/{client.ts,server.ts,admin.ts}
   lib/utils/index.ts
+  types/database.generated.ts
 tests/
   unit/{classnames,environment,supabase-clients}.test.ts
   e2e/home.spec.ts
-scripts/check-supabase.ts
-supabase/{config.toml,.gitignore}
+scripts/{check-supabase,manage-database,test-database}.ts
+supabase/
+  config.toml
+  .gitignore
+  migrations/{20261006153000_apparelflow_domain_schema,20261006153100_assessment_recipes,20261006155500_rejection_reason_whitespace}.sql
+  tests/{bootstrap,schema_catalog,domain_constraints}.sql
 ```
 
 Future directories are created when their authorized implementation needs them;
@@ -193,54 +206,109 @@ No public diagnostics endpoint is exposed.
 
 ## Supabase migration workflow
 
-Cloud Supabase is the primary target. The CLI is pinned locally and initialized
-in `supabase/config.toml`; no SQL, seeds, business tables, or generated database
-types exist yet. CLI login uses a separate Supabase personal access token; linking
-may require the database password. These are server/operator secrets and are
-separate from application API keys. Keep them out of arguments recorded in Git.
+Cloud PostgreSQL **17.11** is the primary target. G03 applied the schema, recipe,
+and rejection-reason whitespace migrations in `supabase/migrations/` using the
+pinned CLI. Every schema
+change must have version-controlled SQL. Never edit applied history; introduce a
+new migration for future changes. The Dashboard is for inspection/project
+configuration, with application schema reproducible from the repository.
 
-Future authorized migration work uses:
+Operator scripts load ignored env files. `SUPABASE_DB_PASSWORD` (legacy
+`db_password` supported) is **server/operator-only**, separate from application
+API keys. The documented direct database host is derived from the project URL;
+optional `SUPABASE_DB_URL` can supply the exact session-pooler URI from the
+project's Connect dialog. Passwords are passed through `PGPASSWORD`, removed
+from CLI arguments, and never logged. App clients do not use this password.
+See [Supabase connection guidance](https://supabase.com/docs/guides/database/connecting-to-postgres).
+
+Reviewable cloud migration workflow:
 
 ```bash
-npx supabase login
-npm run supabase:link -- --project-ref <project-ref>
 npm run supabase:migration:new -- <migration-name>
-# Review the generated supabase/migrations/<timestamp>_<name>.sql first.
-npm run supabase:migration:list -- --linked
-npm run supabase:db:push -- --linked --dry-run
-npm run supabase:db:push -- --linked
+# Implement/review the generated SQL; validate in isolation before applying.
+npm run test:db
+npm run supabase:remote:list
+npm run supabase:remote:plan
+npm run supabase:remote:push
+npm run supabase:schema:verify
+npm run supabase:types
 ```
 
-**Every application schema change must be a version-controlled SQL migration.**
-The Dashboard is for inspection, Auth users, and project configuration; schema
-changes must remain reproducible from the repository. G02 runs no migration push,
-reset, or schema changes. CLI login/linking is not configured yet; cloud API
-connectivity is independent of that operator workflow.
+These scripts use supported CLI `--db-url` flags; no Management API token/login
+is required for the configured direct connection. `psql` must be installed for
+verification. CLI login/link with a separate personal access token remains an
+alternative; the existing `supabase:link`, `supabase:migration:list -- --linked`,
+and `supabase:db:push -- --linked` scripts still support that operator workflow.
+No history repair or cloud reset was used.
 
-Optional later local development requires Docker. `npm run supabase:start`,
-`supabase:status`, and `supabase:stop` operate only the local stack. Local
-`supabase:db:reset -- --local` destroys/recreates that local database; use it only
-for an intended disposable development database. G02 does not install/start
-Docker. The generated PostgreSQL 17 local default must match the chosen cloud
-database version before adopting local migration tests. Local config disables
-public signup, seeding, and implicit Data API grants; cloud Auth settings are
-managed separately before authentication is implemented.
+`npm run test:db` uses an isolated PostgreSQL 17 container, default Docker context
+(override with `DATABASE_TEST_DOCKER_CONTEXT`), no network/host ports, actual SQL
+migrations, idempotent seed replay, and rollback-only fixtures. It removes its
+own container in a finally block. Its minimal Auth identity/role infrastructure
+is only for FK/RLS tests; it neither calls nor implements Supabase Auth. No test
+production records or Auth users are inserted into the cloud project.
 
-After G03 creates the schema, generate types instead of inventing them:
+CLI type generation needs Docker when using `--db-url`. On this machine the
+desktop context is unavailable and the existing default Engine is usable:
 
 ```bash
-mkdir -p src/types
-npx supabase gen types typescript --linked --schema public > src/types/database.ts
-# Or, for an explicitly adopted local stack:
-npx supabase gen types typescript --local --schema public > src/types/database.ts
+DOCKER_HOST=unix:///var/run/docker.sock npm run supabase:types
 ```
 
-Review and commit successful output, then bind the factories' Database generic.
-Do not commit failed/empty generated files. Migration SQL flows from development
-through version control to Supabase; Vercel consumes the resulting application
-configuration. Full migration guidance is in
-[Supabase's migration documentation](https://supabase.com/docs/guides/deployment/database-migrations).
+Use ordinary `npm run supabase:types` where the selected Docker daemon works.
+The CLI generates `src/types/database.generated.ts` from the real public schema;
+existing Prettier formats it automatically, and the file is replaced atomically
+only after successful output/credential checks. Never manually rewrite generated
+definitions. All factories bind its `Database` generic. Generated helper code is
+excluded from authored-code ESLint rules but still strict-typechecked and
+format-checked. No empty/failed generated file is committed.
+
+The full local Supabase stack remains optional. `supabase:start/status/stop` and
+`supabase:db:reset -- --local` operate only that disposable stack. Local config
+uses PostgreSQL 17, disables signup/implicit grants and separate seed files;
+the two recipe seeds are migrations, so both cloud push and local reset include
+them. Cloud Auth settings are configured later with authentication work.
+Migration SQL flows through version control to Supabase; Vercel consumes the
+resulting app configuration. See [migration guidance](https://supabase.com/docs/guides/deployment/database-migrations)
+and [generated types](https://supabase.com/docs/guides/api/rest/generating-types).
+
+## Implemented database foundation
+
+Ten application tables: `profiles`, `recipes`, `recipe_components`,
+`cutting_orders`, `order_components`, `verification_attempts`, `verification_items`,
+`verification_logs`, `verification_log_items`, and `admin_audit_events`.
+`profiles.id` references `auth.users.id`; no duplicate password hash or Auth user
+seed exists. Sewing start actor/time stays on `cutting_orders` with status VERIFIED.
+The [domain relationship diagram](docs/05_DOMAIN_MODEL.md) and
+[actual schema inventory](docs/06_DATABASE_DESIGN.md) explain all relationships.
+
+Six enums cover four lowercase database roles, the four approved order states,
+OPEN/APPROVED/REJECTED attempts, GREEN/YELLOW/RED component states,
+APPROVED/REJECTED decisions, and four account-management audit actions.
+Composite restrictive FKs prevent mixing orders/attempts/recipe components.
+CHECKs preserve positive targets/fabric, nullable nonnegative integer counts,
+safe-integer bounds, consistent signed count evidence, and trimmed rejection
+reasons of 1–1000 characters. Bounded `numeric` scale checks reject overprecision
+instead of silently rounding; analytics preserve negative fabric variance and
+never gate on the recipe cap.
+
+All tables have RLS enabled and **zero policies**. PUBLIC/anon/authenticated
+table access is revoked; service_role has SELECT only with direct mutations
+revoked. Private trigger functions/numbering sequence are inaccessible to API
+roles. Ordinary reads intentionally await later scoped policies. Generated
+Insert/Update types describe structure and do not grant database permissions.
+
+Private invoker triggers block hard deletes/reference-data edits, freeze submitted
+recipe/target/BOM and finalized verification evidence, make logs/admin audit
+immutable, and preserve verified-order/sewing attribution. Mutable rows share
+an updated-at helper. Authorization, legal transitions, full manifest completeness,
+and transactional approval/rejection are still future service/RPC work.
+
+Only REC-BL01 Casual Blouse (1.8 yards, 5% cap) and REC-CT02 Crop Top (1.1 yards,
+8% cap), with their exact five components each and null images, are seeded.
+Deterministic UUIDs and conflict validation make reference-seed replay idempotent.
+No profiles, production orders, verification history, or admin events are seeded.
 
 All business requirements and future milestones remain in [docs](docs/).
-Concrete G01/G02 choices are recorded in
-[architecture decisions](docs/14_ARCHITECTURE_DECISIONS.md#g02-supabase-foundation-decisions).
+Concrete G01/G02/G03 choices and actual validation evidence are recorded in
+[architecture decisions](docs/14_ARCHITECTURE_DECISIONS.md#g03-database-foundation-decisions).

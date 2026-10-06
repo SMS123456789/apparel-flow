@@ -21,5 +21,7 @@ export default defineConfig([
     "playwright-report/**",
     "test-results/**",
     "next-env.d.ts",
+    // Upstream generated definitions are retained; strict tsc validates them.
+    "src/types/database.generated.ts",
   ]),
 ]);

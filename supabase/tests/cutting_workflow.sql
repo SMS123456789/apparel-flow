@@ -74,7 +74,7 @@ END $$;
 RESET ROLE;
 SELECT set_config('request.jwt.claim.sub','92000000-0000-4000-8000-000000000003',true);
 SET LOCAL ROLE authenticated;
-DO $$ BEGIN ASSERT (SELECT count(*) FROM public.recipes)=2,'Verifier reads catalog'; ASSERT (SELECT count(*) FROM public.cutting_orders)=0,'G05 does not grant verifier orders yet'; END $$;
+DO $$ BEGIN ASSERT (SELECT count(*) FROM public.recipes)=2,'Verifier reads catalog'; ASSERT (SELECT count(*) FROM public.cutting_orders)=1,'Verifier reads submitted verification history'; END $$;
 RESET ROLE;
 DO $$ DECLARE who uuid; n bigint; BEGIN
  FOREACH who IN ARRAY ARRAY['92000000-0000-4000-8000-000000000004'::uuid,'92000000-0000-4000-8000-000000000005'::uuid,'92000000-0000-4000-8000-000000000006'::uuid] LOOP

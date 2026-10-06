@@ -328,3 +328,47 @@ Fresh G05 validation: 154 Vitest tests passed; six-migration disposable PostgreS
 Browser review caught an actual mobile layout defect: the BOM table's intrinsic minimum width widened a grid child/form, causing page expansion and unreliable pointer coordinates. The shared form grid now uses minmax(0,1fr), children have min-width:0 and only the labelled table region scrolls. Overflow checks compare document scrollWidth with clientWidth rather than mobile window.innerWidth, which may expand with overflow. Both real desktop/mobile cutting journeys passed after this correction, including immediate errors, edit, frozen submission and refresh. The first browser test also issued a wrong-role API call before persona sign-in completed; it now waits for the authenticated workspace before asserting 403. No force-click or test suppression was added. Screenshots were visually inspected. Seven configured private values were absent from 140 repository files and 378 generated JS files (17 browser files).
 
 Final G05 regression passed 19 Playwright cases with one duplicate viewport skip, plus production build, 154 Vitest tests, typecheck/lint/format and git diff --check. All six migrations match cloud. The six-migration isolated SQL suite and narrow owner/grant catalog assertions passed. G05 is complete and ready for PR merge; G06 follows automatically. E2E-CUTTING assessment fixtures are intentionally retained under the no-hard-delete rule.
+
+## G06 verification implementation
+
+Verifier reads use current user JWT/RLS and permit submitted queue/history only.
+Counts are an explicit unique subset of strict nonnegative safe integers; blank
+remains null, and a saved zero is RED against every positive expectation. The
+service compares every frozen manifest row against saved items independently of
+stored colors. SQL repeats the complete gate under profile/order/attempt locks.
+Named backend-only save/approve/reject gateways have restricted NOLOGIN owner
+commands, pinned search paths, no generic status input and no admin inheritance.
+
+Approval/rejection writes log, component evidence, closed attempt and order state
+in one transaction. Creator separation survives reassignment. Sign-off retains
+verifier name/ID, server timestamp, count variances and signed fabric percentage;
+cap excess is informational. The invoker verification_evidence view transports
+NUMERIC values as text while retaining the log table's RLS. Re-cut keeps finalized
+evidence and submits a fresh uncounted attempt.
+
+The seven-migration SQL suite passed GREEN/YELLOW, zero/uncounted/missing/empty
+hard stops, strict rejection reasons, inactive/wrong-role/creator guards and
+injected audit failure rollback. Real simultaneous PostgreSQL connections proved
+one commit and one stale conflict for dual approvals, count versus approval and
+reject versus approval. 196 Vitest cases pass, including explicit ASMT-01–04
+through real routes/controllers/services with persistence adapters mocked.
+
+Typecheck caught Zod's optional-property output conflicting with exact optional
+properties in the violation DTO. Mapping optional component IDs explicitly fixed
+it without weakening compiler settings. Browser validation and final review are
+recorded below after completion.
+
+Real cloud desktop/mobile Playwright journeys passed saved zero reload, direct
+shortage approval 422, empty-reason 422, authority injection 422, keyboard reason
+validation, rejection, supervisor re-cut/resubmit, fresh null counts, explicit
+Save Counts, YELLOW approval, unchanged prior evidence and repeated approval 409.
+The first new test used a role body instead of the existing demo API's persona
+body and correctly received 422; the test helper was corrected to the documented
+contract. Verifier desktop/mobile screenshots were inspected: readable controls,
+text/icon outcomes and horizontal scroll confined to labeled tables. Typecheck,
+lint, format, build, cloud catalog/history and the private-value scan pass.
+E2E-VERIFICATION/E2E-RECUT fixtures remain as attributable no-delete history.
+
+Final G06 full Playwright regression: 21 passed, one duplicate viewport review
+skipped. All required checks passed before committing. G05 was merged by PR #5,
+main 3845efa; G06 is complete and proceeds to merge and G07.

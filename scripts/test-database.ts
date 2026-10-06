@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 // Isolated disposable PostgreSQL only: no env loading, host ports, or cloud URL.
 const containerName = `apparelflow-db-test-${randomUUID()}`;
@@ -40,6 +40,78 @@ function sql(text: string, user = "cloud_operator") {
       "-",
     ],
     text,
+  );
+}
+
+function concurrentSql(
+  statement: string,
+): Promise<{ status: number | null; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      "docker",
+      [
+        "--context",
+        context,
+        "exec",
+        "-i",
+        containerName,
+        "psql",
+        "-X",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-v",
+        "VERBOSITY=verbose",
+        "-U",
+        "cloud_operator",
+        "-d",
+        "postgres",
+        "-f",
+        "-",
+      ],
+      { stdio: ["pipe", "ignore", "pipe"] },
+    );
+    let stderr = "";
+    child.stderr.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on("error", reject);
+    child.on("close", (status) => resolve({ status, stderr }));
+    child.stdin.end(
+      `SET ROLE service_role; BEGIN; ${statement}; SELECT pg_sleep(0.2); COMMIT;`,
+    );
+  });
+}
+async function verificationRaces() {
+  sql(
+    readFileSync("supabase/tests/verification_concurrency_setup.sql", "utf8"),
+  );
+  const actorA = "'96000000-0000-4000-8000-000000000002'",
+    actorB = "'96000000-0000-4000-8000-000000000003'";
+  for (const name of ["dual-approve", "count-approve", "reject-approve"]) {
+    const batch = `(SELECT id FROM public.isolated_race_orders WHERE name='${name}')`,
+      attempt = `(SELECT attempt FROM public.isolated_race_orders WHERE name='${name}')`;
+    const approve = `SELECT public.verification_approve(${actorA},${batch},${attempt},2)`;
+    const other =
+      name === "dual-approve"
+        ? `SELECT public.verification_approve(${actorB},${batch},${attempt},2)`
+        : name === "reject-approve"
+          ? `SELECT public.verification_reject(${actorB},${batch},${attempt},2,'Physical defect')`
+          : `SELECT public.verification_save(${actorB},${batch},${attempt},2,'[{"componentId":"20000000-0000-4000-8000-000000000001","actualQty":0}]'::jsonb)`;
+    const results = await Promise.all([
+      concurrentSql(approve),
+      concurrentSql(other),
+    ]);
+    if (
+      results.filter((r) => r.status === 0).length !== 1 ||
+      !results.some((r) => r.status !== 0 && r.stderr.includes("40001"))
+    )
+      throw new Error(`Isolated concurrent ${name} did not conflict safely`);
+    console.log(
+      `PASS real two-session ${name}: one commit, one stale conflict`,
+    );
+  }
+  sql(
+    readFileSync("supabase/tests/verification_concurrency_assert.sql", "utf8"),
   );
 }
 
@@ -116,6 +188,11 @@ try {
   console.log(
     "PASS cutting command authorization, multipliers, frozen submission, re-cut, RLS and injected rollback",
   );
+  sql(readFileSync("supabase/tests/verification_gatekeeper.sql", "utf8"));
+  console.log(
+    "PASS verification GREEN/YELLOW, hard stops, reasons, identity, immutable re-cut evidence and decision rollback",
+  );
+  await verificationRaces();
 } catch (error) {
   console.error(
     error instanceof Error ? error.message : "Isolated database check failed",

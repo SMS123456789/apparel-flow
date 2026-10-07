@@ -4,11 +4,13 @@ ApparelFlow is a persistent garment cutting and verification terminal. A separat
 Cutting Verifier must count every required component before a batch can reach
 sewing. System administration manages accounts without manufacturing authority.
 
-**G04–G08 complete — ready for manual deployment.** The configured assessment
-Supabase database has all eight migrations and the real evaluator accounts.
-**LIVE DEPLOYMENT: PENDING MANUAL USER DEPLOYMENT.** Follow
-[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md); no production website or DNS was
-created during this implementation.
+**Production application:** [https://apparel-flow.vercel.app/](https://apparel-flow.vercel.app/)
+
+The functional implementation and semantic UI are complete. This branch adds the
+requested read-only production audit, favicon and loading polish. Live verification
+is recorded in [the final assessment report](docs/17_FINAL_ASSESSMENT_VERIFICATION.md);
+the existing deployment is verified separately from this local branch.
+[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) documents how to reproduce the environment.
 
 ## Business workflow
 
@@ -91,7 +93,7 @@ privileged browser RPC execution are denied. Four admin and eight production
 backend gateways call restricted private commands with pinned search paths.
 Commands lock/recheck actor/state/revision and commit evidence with state.
 Sewing RLS hides unapproved orders and earlier rejected children of verified
-re-cuts. Service secret use is limited to server command/Auth-admin adapters.
+re-cuts. Service secret use is limited to server command/Auth-admin adapters and the guarded, SELECT-only production audit repository.
 
 SSR Proxy refreshes cookies; pages/APIs independently check current roles.
 Cookies are HttpOnly, SameSite=Lax and Secure on HTTPS. Mutations require the exact
@@ -178,8 +180,23 @@ passwords stay server-side. Evaluators sign out between personas:
 | Cutting Verifier   | `/verifier` and `/verifier/history` | Save counts, approve/reject and inspect history |
 | Sewing Supervisor  | `/sewing`                           | Inspect approved work and start assembly        |
 
-The private SYSTEM_ADMIN signs in through the ordinary form and uses `/admin`
-and `/admin/audit`; there is no public admin demo button.
+These three assessment accounts are intentionally public evaluator credentials,
+as requested for submission. They authenticate real Supabase accounts. Keep the
+SYSTEM_ADMIN, infrastructure keys and database password private.
+
+<!-- evaluator-credentials:start -->
+
+| Persona            | Email                                    | Password                               |
+| ------------------ | ---------------------------------------- | -------------------------------------- |
+| Cutting Supervisor | demo.cutting-supervisor@apparelflow.test | `aA7!OLoYHUcNZQnZ3YjW5OAq9sDnqfq9aKdE` |
+| Cutting Verifier   | demo.cutting-verifier@apparelflow.test   | `aA7!ZZWdxET5NdTkOWGd90bnHiCjOC98SpvC` |
+| Sewing Supervisor  | demo.sewing-supervisor@apparelflow.test  | `aA7!kSMvnGGSamC7H3xMDzBzqbsb_hv2Bvac` |
+
+<!-- evaluator-credentials:end -->
+
+The private SYSTEM_ADMIN signs in through the ordinary form and uses `/admin`,
+`/admin/audit` and the read-only `/admin/production-audit`; there is no public
+admin demo button.
 
 ## Tests and production build
 
@@ -198,14 +215,14 @@ node --import tsx scripts/audit-private-values.ts
 npm audit --omit=dev
 ```
 
-Expected results: 215 Vitest tests; 23 browser passes with one deliberately skipped
+Expected results: 227 Vitest tests; 29 browser passes with one deliberately skipped
 duplicate viewport review; eight migrations and four real two-connection race
 checks in disposable PostgreSQL; successful production build. Typecheck/lint/format
 exit zero. Browser tests start `next start` at `127.0.0.1:3100` with the matching
 origin and use the configured cloud DB. API tests mock persistence adapters;
 SQL/browser tests exercise real storage separately. Browser Auth traces are off.
 
-Browser journeys create attributable E2E-CUTTING/E2E-HAPPY/E2E-VERIFICATION/E2E-RECUT
+Browser journeys create attributable E2E-CUTTING/E2E-HAPPY/E2E-VERIFICATION/E2E-RECUT/E2E-AUDIT/E2E-PENDING
 records. These remain under the no-hard-delete rule. Admin role/activity tests
 restore demo accounts and retain their audit. Do not run this suite concurrently
 with other users changing those controlled accounts.
@@ -225,7 +242,7 @@ Use <http://localhost:3000/login> with the matching local `APP_ORIGIN`.
 cases and the local evaluator simulation to evidence.
 [AI_OPTIMIZATION_REPORT.md](AI_OPTIMIZATION_REPORT.md) records real failures,
 human direction and defensive architecture.
-[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) gives the remaining manual Vercel steps.
+[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) documents the existing Vercel environment and reproduction steps.
 [Architecture decisions](docs/14_ARCHITECTURE_DECISIONS.md) retain chunk validation
 and correction history. UI work follows [the design contract](docs/15_UI_DESIGN_SYSTEM.md).
 
@@ -235,4 +252,4 @@ has nine high findings rooted in the unpatched
 breaking tool downgrades were not applied. ESLint 9 emits an upstream EOL notice.
 The application intentionally supports one factory, read-only recipes and sewing
 start metadata only. A database owner remains an infrastructure authority beyond
-application immutability. LIVE DEPLOYMENT is the only pending user action.
+application immutability. See the final assessment report for local-versus-live results; no replacement deployment was performed.

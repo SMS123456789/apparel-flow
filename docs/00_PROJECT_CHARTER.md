@@ -1,6 +1,6 @@
 # 00 - Project charter
 
-**Status:** G00–G07 are merged into main. G08 submission artifacts and final evaluator checks are complete before its merge. Cutting, verification, re-cut and verified-only sewing are implemented. **LIVE DEPLOYMENT: PENDING MANUAL USER DEPLOYMENT.** See [16 Submission checklist](16_SUBMISSION_CHECKLIST.md) and [the deployment guide](../DEPLOYMENT_GUIDE.md).
+**Status:** G00–G08 and UIX01 are merged. Cutting, verification, re-cut and VERIFIED-only sewing are implemented. The user supplied the existing production application at https://apparel-flow.vercel.app/. The current refinement branch adds read-only Production Audit, a favicon and precise loading states. [17 Final assessment verification](17_FINAL_ASSESSMENT_VERIFICATION.md) records both repository checks and deployed-version gaps; no replacement deployment was performed.
 **Reviewed/approved:** 2026-10-06, Asia/Colombo.
 **Sources:** *ApparelFlow ERP - Software Engineering Practical Challenge*, Webtezza (Pvt) Ltd, all six pages/sections 1-16; original G00 request; user's decision-approval table; subsequent synchronous admin-creation clarification.
 
@@ -8,7 +8,7 @@
 
 **ASSESSMENT REQUIREMENT:** A persistent authenticated Cutting Operations & Gatekeeper Verification Terminal prevents unverified/shortage batches from reaching sewing. Scope includes seeded recipes, cutting orders, component multiplication/counting, approval/rejection/re-cut, immutable sign-off, fabric variance, and a VERIFIED-only Sewing Queue.
 
-**APPROVED EXTENSION:** SYSTEM_ADMIN manages production users/roles/account activity and administrative audit only. It cannot manufacture, impersonate, force production state, or inject queue entries.
+**APPROVED EXTENSION:** SYSTEM_ADMIN manages production users/roles/account activity and administrative audit, and may read the explicitly requested Production Audit projection. It cannot manufacture, impersonate, force production state, or inject queue entries.
 
 **DESIGN DECISION (approved by user):** Next.js, TypeScript, Supabase PostgreSQL/Auth/RLS, server RBAC, Zod, Tailwind CSS, shadcn/ui, Vitest, Playwright, Vercel, Next.js Route Handlers, layered modular monolith. No Prisma/Auth.js.
 
@@ -62,7 +62,7 @@ All 26 historical UD IDs now have approved directions in [APPROVED_DECISIONS](14
 
 **ASSESSMENT REQUIREMENT:** Final submission needs live public cloud URL, public GitHub with atomic commits, root README architecture/schema/three demo credentials, runnable passing tests, and four-section AI_OPTIMIZATION_REPORT.md with two actual flawed AI-code examples (12/14, pp.5-6). G00 records these obligations without claiming an application exists.
 
-**DESIGN DECISION (G04 evaluator access, ADR-040):** README documents the three real demo persona buttons. Each authenticates its distinct Supabase account using private server configuration; passwords remain in ignored local/Vercel configuration. The assessment credential wording above remains recorded; implemented evaluator access follows the approved G04 real-account flow. SYSTEM_ADMIN credentials are never public.
+**DESIGN DECISION (G04 evaluator access, ADR-040):** The three real demo persona buttons authenticate distinct Supabase accounts using server configuration. The later final-assessment request explicitly authorizes publishing the three evaluator credential pairs in a marked README section as well. SYSTEM_ADMIN and infrastructure credentials remain private.
 
 **ASSESSMENT REQUIREMENT:** Four calendar days from issue date, 28-32 focused hours (p.1; 13, p.5). **DESIGN DECISION (approved by user, UD-024):** This schedule is not an architecture blocker; admin is secondary. Use relative milestone days without inventing a calendar deadline.
 

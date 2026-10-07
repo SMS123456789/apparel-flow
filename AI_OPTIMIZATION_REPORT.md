@@ -13,7 +13,7 @@ historical commits.
 Codex was used as a repository coding agent with shell/Git, TypeScript, Supabase
 CLI, PostgreSQL, Docker, Vitest and Playwright. Official Supabase/PostgreSQL/Next.js
 references supported integration choices; official Vercel/Supabase documentation
-was checked for the manual deployment guide. No Vercel deployment was executed.
+was checked for the manual deployment guide. No Vercel deployment was executed by this implementation workflow; the user later supplied an existing production URL for verification.
 
 The user supplied a concrete vertical implementation order and acceptance gates:
 finish existing G04 rather than rebuild it, then Cutting Supervisor, Verification,
@@ -30,6 +30,22 @@ PostgreSQL transactions, not just mocked unit results. Schema/type generation
 used CLI output. Environment credentials were read privately when needed, kept
 ignored and excluded from logs/source/browser bundles. Browser Auth traces were
 disabled. No parallel coding agents were used in this continuation.
+
+The final assessment explicitly authorizes the three evaluator account pairs in
+README. The credential scan allows those passwords only inside that marked
+section; admin/infrastructure values remain excluded everywhere. A temporary live
+inspection cleanup error emitted a demo-session cookie in tool output. The script's
+asynchronous error handling was corrected, the inspection rerun, and demo Supervisor
+refresh sessions revoked; no token was saved in repository artifacts.
+
+### Subscription-cost estimate
+
+The user estimates this project used approximately **15–20% of one weekly Codex allowance**. This is not measured token usage or metered billing. If a $100 subscription is conceptually divided across four weekly allowances, the approximate subscription-cost allocation is:
+
+- `15 / 400 × $100 = $3.75`
+- `20 / 400 × $100 = $5.00`
+
+This $3.75–$5.00 estimate attributes part of a subscription to the project; it does not establish the actual marginal/API cost.
 
 ## 2. Flawed / Broken AI Code
 
@@ -135,16 +151,14 @@ report attributes requirements and implementation separately.
 - **Conflict recovery:** shared profile/order locks and revisions serialize writes;
   repeated decisions/start return 409. The UI retains recoverable count entries
   for deliberate reread/Save Counts, without optimistic sign-off.
-- **Evidence of behavior:** 215 Vitest cases cover domain/API layers; actual SQL
+- **Evidence of behavior:** 227 Vitest cases cover domain/API layers; actual SQL
   tests cover all eight migrations, grants/RLS/rollback/immutability and four
-  two-connection races. Real Playwright journeys have 23 passes plus one explicit
+  two-connection races. Real Playwright journeys have 29 passes plus one explicit
   duplicate viewport skip. Contrast, keyboard, responsive and persistence checks
   accompany a successful production build. Configured private values are absent
   from source/generated JS; the production dependency audit has zero findings.
 
 Known limits are explicit: the full dev-tool audit retains nine high transitive
-findings with no upstream patched braces release, and ESLint 9 is EOL. Controlled
+findings with no patched version listed in the [braces advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) checked on 2026-10-07, and ESLint 9 is EOL. Controlled
 browser fixtures/audit remain under the no-hard-delete contract. Infrastructure
-operators can act beyond application grants. Actual live deployment and its
-public-URL smoke test remain manual user work; local validation is not a claim of
-live deployment.
+operators can act beyond application grants. The user subsequently supplied https://apparel-flow.vercel.app/ for live verification. The final report distinguishes that deployed version from this branch; local validation alone is not a live-release claim.

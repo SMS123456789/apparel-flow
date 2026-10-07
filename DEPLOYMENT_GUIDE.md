@@ -1,10 +1,12 @@
 # Manual deployment guide
 
-**Status: PENDING MANUAL USER DEPLOYMENT.** This guide is for the user to deploy
-ApparelFlow. Implementation, migrations and local/cloud-backed validation are
-complete; no Vercel project, website deployment or DNS change was performed.
-Instructions were checked against the repository and official docs on 2026-10-07.
-Replace placeholders with your own values privately.
+**Current deployed application:** [https://apparel-flow.vercel.app/](https://apparel-flow.vercel.app/)
+
+The user supplied this existing production deployment for final verification.
+This guide documents reproduction and operator maintenance; no replacement
+deployment, configuration or DNS change was performed during verification.
+[Final assessment evidence](docs/17_FINAL_ASSESSMENT_VERIFICATION.md) distinguishes
+the deployed version from the current local branch. Keep private values private.
 
 ## 1. Pre-deployment checks
 
@@ -280,6 +282,6 @@ JWTs or secret keys into diagnostics.
 | 409 save/approve/start                                | Reread authoritative state. Verifier retains local counts for deliberate review/Save Counts. After a decision timeout inspect committed state before retrying. Repeated sewing start correctly conflicts.                                         |
 | Operator database/Docker failure                      | Check `psql`, network/session-pooler connection, separate DB password and Docker availability/context. `npm run test:db` is disposable/local only; type generation may need the Linux host Docker socket above.                                   |
 
-LIVE DEPLOYMENT remains the sole pending user action until the final public URL
-passes this smoke test. Local evidence is in
+The current production URL is recorded above. Test results and any deployed-version
+gaps are recorded in the final assessment report. Submission evidence is in
 [the submission checklist](docs/16_SUBMISSION_CHECKLIST.md).

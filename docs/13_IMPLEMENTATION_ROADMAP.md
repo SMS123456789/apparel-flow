@@ -1,6 +1,6 @@
 # 13 - Chunked implementation roadmap
 
-**DESIGN DECISION (autonomous continuation request):** Finalize existing G04, then execute G05–G08 sequentially without intermediate approval. Each chunk must pass its required checks before commit/push/PR/merge and main synchronization. G08 prepares submission and DEPLOYMENT_GUIDE.md; production deployment is manual user action. No deployment has occurred.
+**DESIGN DECISION (autonomous continuation request):** Finalize existing G04, then execute G05–G08 sequentially without intermediate approval. Each chunk must pass its required checks before commit/push/PR/merge and main synchronization. G08 prepares submission and DEPLOYMENT_GUIDE.md; production deployment is manual user action. This records the earlier deployment boundary. The user later supplied https://apparel-flow.vercel.app/; [17 Final assessment verification](17_FINAL_ASSESSMENT_VERIFICATION.md) records its actual checks. No replacement deployment is authorized.
 
 ## Current execution plan
 
@@ -14,7 +14,7 @@
 | G05 | Cutting Supervisor Workflow | Complete and merged through PR #5 (commit ca17f9d, main 3845efa): 154 Vitest tests, 19 Playwright passes (one duplicate viewport skip), production build and six-migration real SQL/RLS/rollback suite. Supervisor-only order creation/preparation, bounded input validation, exact BOM multiplier/manifest, first-submit freezing, atomic submission and same-order re-cut preparation. Persistence, role/direct-API/RLS and transaction tests accompany implementation. |
 | G06 | Verification & Gatekeeper | Complete: 196 Vitest tests, seven-migration SQL suite and three real two-session races; desktop/mobile persisted rejection/re-cut/approval journey. Verifier queue/terminal, explicit Save Counts, null versus zero, GREEN/YELLOW/RED, RED/missing/uncounted hard stop, reasoned rejection, immutable attempts/sign-off, creator separation and locked transactions. All gate/race/rollback/security tests. |
 | G07 | Sewing & Full-System Hardening | Complete: 215 Vitest tests, eight-migration SQL suite and four real two-session races. Fixed VERIFIED-only queue/detail and Start Sewing fields retaining VERIFIED. End-to-end handoffs, re-cut, five assessment cases, direct database attacks, role/RLS review, responsive/contrast/accessibility audit and final system testing. |
-| G08 | Deployment & Submission | Complete: final local evaluator simulation, README/setup/schema/evaluator access, four-section AI report with three real flawed-code examples, nine-section manual guide, submission checklist and atomic public GitHub history. LIVE DEPLOYMENT remains pending human action. |
+| G08 | Deployment & Submission | Complete: final local evaluator simulation, README/setup/schema/evaluator access, four-section AI report with three real flawed-code examples, nine-section manual guide, submission checklist and atomic public GitHub history. The historical G08 check preceded the user-supplied production URL. |
 
 Admin was explicitly included in the user's G04 chunk; it does not acquire production authority. G05–G07 retain the approved manufacturing rules: integer counts, positive fabric with at most three decimals, YELLOW allowed, warning-only cap, signed fabric variance, same-order/new immutable re-cut attempts and VERIFIED-preserving sewing start. There is no generic status override.
 
@@ -64,6 +64,14 @@ The original G00 plan used G00–G28 identifiers. That schedule remains historic
 
 **ASSESSMENT REQUIREMENT (section 13, p.5):** Four days / 28–32 focused hours. Day 1 establishes architecture/database/repository/cloud foundations; day 2 covers persona access and cutting creation/multiplier; day 3 covers verifier/gate/rejection; day 4 covers sewing/tests/contrast/AI report. These are relative assessment days, not an invented calendar deadline.
 
-**DESIGN DECISION (approved UD-024):** The known schedule does not block architecture. Admin remains secondary to core assessment outcomes even though the user requested it inside G04. Release requires all five core cases, durable gate/audit/RBAC evidence, UI verification and the mandatory submission artifacts. The final G07–G08 checks now demonstrate the full local/cloud-backed acceptance; live deployment is reserved for manual user action.
+**DESIGN DECISION (approved UD-024):** The known schedule does not block architecture. Admin remains secondary to core assessment outcomes even though the user requested it inside G04. Release requires all five core cases, durable gate/audit/RBAC evidence, UI verification and the mandatory submission artifacts. The final G07–G08 checks now demonstrate the full local/cloud-backed acceptance; the current refinement branch remains separate from the existing production deployment.
 
 Each chunk records actual checks/failures/fixes in [14](14_ARCHITECTURE_DECISIONS.md). [11](11_TEST_PLAN.md) preserves the full-system acceptance matrix. Applied SQL is immutable; any later database fix needs a forward migration. The continuation request explicitly authorizes the remaining chunks.
+
+## Current refinement and assessment review
+
+Branch `feat/production-audit-loading` preserves the architecture, manufacturing
+commands, database migrations/RLS and original tests. It adds only the requested
+read-only audit projection and UI loading/favicon refinement. The assessment
+review covers the local production build and the authoritative Vercel URL.
+Publishing the branch is outside this verification request.

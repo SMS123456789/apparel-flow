@@ -115,4 +115,17 @@ UI review covers login/admin/cutting/verifier/sewing at 1280/768/375/320,
 actual field/action colors, focused/invalid/disabled states, touch/count sizing,
 keyboard dialogs, error focus, Enter safety, 200% text enlargement and persistence.
 This scoped evidence is not a formal independent WCAG certification.
-Only live deployment/public-URL smoke testing remains manual user action.
+That paragraph records the historical G07–G08 check. The existing production URL and current branch are now verified separately in [17 Final assessment verification](17_FINAL_ASSESSMENT_VERIFICATION.md).
+
+## Current production-polish verification
+
+The current suite has 227 Vitest tests across 15 files and 29 Playwright passes
+plus the existing duplicate viewport-review skip. Existing tests are retained.
+New tests cover Production Audit authorization, exact timestamp pagination, real
+workflow evidence, static reduced-motion skeletons, refresh retention, safe
+errors, the App Router favicon, and guarded pending labels with stable width.
+
+Real production smoke data is identified by `ASSESSMENT-LIVE-` and remains under
+the no-delete audit contract. Read-only cloud SELECTs confirm the final order,
+two attempts, two decisions, ten immutable component snapshots and sewing-start
+attribution. The final report distinguishes deployed checks from local results.

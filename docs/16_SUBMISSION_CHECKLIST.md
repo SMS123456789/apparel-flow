@@ -1,73 +1,52 @@
 # 16 - Submission and evaluator checklist
 
-**Local/cloud-backed implementation: COMPLETE.**
-**LIVE DEPLOYMENT: PENDING MANUAL USER DEPLOYMENT.**
+**Current repository checks: PASS. Existing production workflow: PASS.**
+**Final assessment sign-off: withheld for deployed-version gaps.**
 
-Verified on 2026-10-07, Asia/Colombo. The production-mode browser server runs
-locally while persistence/Auth use the configured assessment Supabase project.
-No Vercel project/site/DNS was configured. Follow
-[the manual deployment guide](../DEPLOYMENT_GUIDE.md) to finish the public URL.
+The authoritative production application is https://apparel-flow.vercel.app/.
+It was exercised independently of localhost on 2026-10-07. The current branch's
+Production Audit, favicon and loading refinements have not been published there.
+See [17 Final assessment verification](17_FINAL_ASSESSMENT_VERIFICATION.md) for
+the complete PASS/FAIL table, exact mandatory test names, live record evidence
+and quality-command results. No replacement deployment or Vercel/DNS change was
+performed. [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md) documents reproducibility.
 
-## Assessment cases
-
-| Case | Expected result | Executed evidence |
-| --- | --- | --- |
-| ASMT-01 | Authenticated verifier can approve all GREEN | `verification-api.test.ts`; `verification_gatekeeper.sql`; real three-persona `sewing.spec.ts` |
-| ASMT-02 | Any RED blocks approval, including a direct request | Unit/service/API, SQL zero/shortage and real browser `verification.spec.ts`: 422; Approve disabled |
-| ASMT-03 | Reject without meaningful reason fails | Strict API/schema and SQL whitespace regressions; real browser 422 and focused reason validation |
-| ASMT-04 | Non-verifier approval returns 403 | All other roles through API guards; real Supervisor direct attack; SQL role/activity/creator guards |
-| ASMT-05 | Unapproved work never reaches Sewing query | Fixed repository/view predicate; strict query filters; real RLS child tests and pending/rejected browser queue/detail isolation |
-
-Additional executed cases: YELLOW eligible, null versus zero, missing components,
-physical-defect rejection with GREEN, above-cap approval, signed negative fabric,
-immutable prior rejection after re-cut, fresh blank attempt counts, current actor
-and database timestamps, stale decisions, creator separation after role change,
-repeat/concurrent assembly start and immutable attribution.
-
-## Evaluator simulation
+## Submission checks
 
 | Item | Result / evidence |
 | --- | --- |
-| Actual evaluator accounts | Bootstrap verifies active real Cutting Supervisor, Cutting Verifier, Sewing Supervisor and private admin; replay does not reset passwords |
-| Public signup | Cloud Auth settings checked disabled by bootstrap; no public signup API/UI |
-| Happy path | Supervisor UI create/submit → Verifier explicit counts/approval → Sewing approved evidence/start/reload, desktop/mobile |
-| Rejection path | Saved zero/RED → direct approve 422 → reasoned reject → supervisor re-cut/resubmit → fresh recount/YELLOW approval → approved-only sewing/start/reload |
-| RBAC/security | Current profiles, independent roles, wrong-role 403, strict identity/time/status DTOs, exact Origin, no raw DML/RPC, no admin manufacturing access |
-| RLS/grants | Eight applied migrations match generated types/cloud catalog; ten tables, nine SELECT policies, restricted owners/views/commands |
-| Transactions/races | SQL injected rollback plus actual dual-approve, count-approve, reject-approve, dual-start: exactly one winner and one stale conflict |
-| UI/accessibility | 1280/768/375/320, measured text/control contrast, 16px count fields, 44px touch targets, 200% text enlargement, labels/errors/focus/dialog/Enter/reflow checks |
-| Credentials | Seven configured private values absent from repository/generated JS; environment files ignored; private admin credentials unpublished |
-| Required artifacts | Root README, four-section AI report with real evidenced failures, nine-section manual deployment guide |
-| Public source | GitHub repository is PUBLIC; reachable Git history and PR/issue/comment metadata were audited before visibility changed |
-| LIVE DEPLOYMENT | **PENDING MANUAL USER DEPLOYMENT**; requires user Vercel setup and public-URL smoke test |
+| Three evaluator accounts | Real Supabase Auth credentials in README; each exact workspace and cross-role 403 verified locally and live. Private admin credentials excluded. |
+| Five mandatory cases | Existing ASMT-01–05 pass; exact mapping in the final report. |
+| Full evaluator workflow | Both local/browser and controlled live shortage/reject/re-cut/YELLOW approve/sewing-start flow pass; refreshed data matches cloud records. |
+| Sewing isolation | All three unapproved states absent from live queue/detail; unsupported status filters return 422. Verified detail exposes exact approved evidence. |
+| Numeric guards | Strict inline/API/SQL validation; component zero accepted; positive fabric supports up to three decimals. |
+| Audit | Immutable production sign-off and account audit pass. New read-only Production Audit passes locally; deployed API returns 404. |
+| UI | Desktop/tablet/mobile contrast and reflow pass on available live screens and local branch. Requested new loading/favicon refinement awaits publication of this branch. |
+| Quality | 227 Vitest tests / 15 files; 29 Playwright passes / one existing viewport skip; eight-migration SQL suite / four real races; ci/typecheck/lint/format/build pass. |
+| Credentials / security | Configured private values excluded from bundles/source/history; env files ignored. Only the three explicitly requested evaluator pairs are published in the marked README section. |
+| Submission files | README, four-section factual AI report with cost estimate, deployment guide and final assessment report updated. |
+| Git history | Public source contains readable G00–G08 and UIX01 commits/PR merges. Refinement commit `563ed71` is on a separate branch. |
 
-## Quality results
-
-- `npm ci`, typecheck, lint and format: pass.
-- `npm test`: **215 tests, 13 files passed**.
-- `npm run test:db`: **eight migrations, full SQL suite, four actual two-session races passed**.
-- `npm run test:e2e`: **23 passed, one deliberate duplicate viewport review skipped**.
-- `npm run build`: **pass**, including protected UI and all API routes.
-- Cloud schema/history verification and real account bootstrap: **pass**.
-- Private-value/browser-marker audit: **pass**; production npm audit: **zero findings**.
-
-Full dev-tool audit retains nine high findings rooted in an unpatched braces
-advisory; ESLint 9 emits an EOL notice. These are documented limitations rather
-than a claim that the full audit is clean. Existing E2E records remain as
-attributable history under the no-delete contract. One factory/read-only recipes/
-assembly-start-only scope is intentional. Only LIVE DEPLOYMENT is pending.
+The production dependency audit reports zero findings. The inherited full
+development-tool audit still has nine high transitive findings and ESLint 9 is
+EOL. Attributable browser fixtures and the controlled live order retain their
+audit evidence under the no-hard-delete contract.
 
 ## Repository milestones
 
 | Chunk | Feature commit | Merged PR / main merge |
 | --- | --- | --- |
+| G00 | `9b9a7a3` | Approved requirements and architecture |
+| G01 | `8bc0103` | [#1](https://github.com/SMS123456789/apparel-flow/pull/1), `c8ec89b` |
+| G02 | `fff5167` | [#2](https://github.com/SMS123456789/apparel-flow/pull/2), `0ec4879` |
+| G03 | `1788109` | [#3](https://github.com/SMS123456789/apparel-flow/pull/3), `97da2e7` |
 | G04 | `5cc1472` | [#4](https://github.com/SMS123456789/apparel-flow/pull/4), `9a818fb` |
 | G05 | `ca17f9d` | [#5](https://github.com/SMS123456789/apparel-flow/pull/5), `3845efa` |
 | G06 | `380afce` | [#6](https://github.com/SMS123456789/apparel-flow/pull/6), `349ab61` |
 | G07 | `6a94ea6` | [#7](https://github.com/SMS123456789/apparel-flow/pull/7), `bfa4446` |
-| G08 | Submission artifacts and final evaluation | Documentation PR merges after these checks; [Git history](https://github.com/SMS123456789/apparel-flow/commits/main/) records its final hashes |
+| G08 | `414e222` | [#8](https://github.com/SMS123456789/apparel-flow/pull/8), `8800e76` |
+| UIX01 | `91f33c1` | [#9](https://github.com/SMS123456789/apparel-flow/pull/9), `8e1f64b` |
 
-[Architecture decisions](14_ARCHITECTURE_DECISIONS.md) preserve actual chunk
-failures, corrections and validation. Final user action: manually import merged
-`main` into Vercel, configure the documented Production environment/Auth origin,
-deploy, then complete the public smoke test and submit the resulting URL.
+[Architecture decisions](14_ARCHITECTURE_DECISIONS.md) preserve historical
+milestone evidence. The final report supersedes historical statements that no
+production URL exists while retaining those records as project history.

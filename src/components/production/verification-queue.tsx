@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/http/client";
 import type { OrderPage } from "@/modules/orders/types";
-import { statusLabel } from "./order-list";
+import { StatusBadge } from "@/components/shared/semantic-status";
+import {
+  HumanDateTime,
+  displayTimezone,
+  formatCount,
+} from "@/components/shared/data-display";
+import { ChevronRight } from "lucide-react";
 export function VerificationQueue({ history = false }: { history?: boolean }) {
   const [result, setResult] = useState<OrderPage | null>(null),
     [error, setError] = useState(""),
@@ -83,7 +89,7 @@ export function VerificationQueue({ history = false }: { history?: boolean }) {
         </p>
       )}
       <p className="helper" role="status">
-        {busy ? "Loading batches…" : "Times shown in UTC."}
+        {busy ? "Loading batches…" : `Times: ${displayTimezone}.`}
       </p>
       <div
         className="table-region"
@@ -98,29 +104,29 @@ export function VerificationQueue({ history = false }: { history?: boolean }) {
               <th>Recipe</th>
               <th className="numeric">Garments</th>
               <th>State</th>
-              <th>Updated (UTC)</th>
+              <th>Updated</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {result?.items.map((o) => (
               <tr key={o.id}>
-                <td>{o.orderNo}</td>
+                <td className="primary-data order-number">{o.orderNo}</td>
                 <td>
-                  {o.recipeName}
+                  <span className="primary-data">{o.recipeName}</span>
                   <span className="helper block">{o.recipeCode}</span>
                 </td>
-                <td className="numeric">{o.targetQty}</td>
-                <td>{statusLabel(o.status)}</td>
+                <td className="numeric">{formatCount(o.targetQty)}</td>
                 <td>
-                  {new Date(o.updatedAt)
-                    .toISOString()
-                    .replace("T", " ")
-                    .slice(0, 19)}
+                  <StatusBadge status={o.status} />
                 </td>
                 <td>
-                  <Link href={`/verifier/${o.id}`}>
+                  <HumanDateTime value={o.updatedAt} stacked />
+                </td>
+                <td>
+                  <Link className="row-action" href={`/verifier/${o.id}`}>
                     Open batch<span className="sr-only"> {o.orderNo}</span>
+                    <ChevronRight size={14} aria-hidden="true" />
                   </Link>
                 </td>
               </tr>

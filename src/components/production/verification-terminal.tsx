@@ -3,12 +3,17 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { api, ApiClientError } from "@/lib/http/client";
 import type { OrderDetail } from "@/modules/orders/types";
-import { approvalViolations } from "@/modules/verification/rules";
+import {
+  approvalViolations,
+  componentResult,
+} from "@/modules/verification/rules";
 import { rejectSchema } from "@/modules/verification/schemas";
 import { ActionDialog } from "@/components/shared/action-dialog";
 import { ComponentStatus } from "./component-status";
 import { DecisionHistory } from "./decision-history";
-import { statusLabel } from "./order-list";
+import { StatusBadge } from "@/components/shared/semantic-status";
+import { formatCount } from "@/components/shared/data-display";
+import { CircleAlert, Check } from "lucide-react";
 function countValue(value: string): number | null {
   return value === ""
     ? null
@@ -104,6 +109,21 @@ export function VerificationTerminal({
     order && attempt
       ? approvalViolations(order.components, attempt.items)
       : [{ reason: "MISSING_COMPONENT" }];
+  const shortages = violations.filter((v) => v.reason === "SHORTAGE").length;
+  const uncounted = violations.filter((v) => v.reason === "UNCOUNTED").length;
+  const gateSummary = [
+    shortages
+      ? `${shortages} component${shortages === 1 ? " has" : "s have"} a shortage.`
+      : "",
+    uncounted
+      ? `${uncounted} component${uncounted === 1 ? " is" : "s are"} not counted.`
+      : "",
+    violations.some((v) => v.reason === "MISSING_COMPONENT")
+      ? "Required component data is incomplete."
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const blocker = !pending
     ? "This attempt is finalized or outside pending verification."
     : own
@@ -117,7 +137,7 @@ export function VerificationTerminal({
             : dirty
               ? "Save your count changes before approving."
               : violations.length
-                ? "Every required component must be counted without shortages."
+                ? gateSummary
                 : "Saved counts are eligible for approval. Excess is permitted.";
   const canApprove =
     pending &&
@@ -270,10 +290,14 @@ export function VerificationTerminal({
         <div>
           <h1>{order.orderNo}</h1>
           <p className="intro">
-            {order.recipeCode} · {order.recipeName} · {order.targetQty} garments
-            · {statusLabel(order.status)}
+            <strong>{order.recipeName}</strong> · {formatCount(order.targetQty)}{" "}
+            garments
           </p>
-          <p className="helper">
+          <div className="batch-context">
+            <StatusBadge status={order.status} />
+            <span className="helper">{order.recipeCode}</span>
+          </div>
+          <p className="helper intro">
             Attempt {attempt?.attemptNo ?? "—"} · Roll {attempt?.fabricRollId} ·
             Expected fabric {attempt?.expectedFabricYards} yards · Actual{" "}
             {attempt?.actualFabricYards} yards
@@ -303,6 +327,13 @@ export function VerificationTerminal({
       )}
       {pending && (
         <>
+          <div className="section-heading">
+            <h2>Component counts</h2>
+          </div>
+          <p id="count-table-help" className="helper">
+            Blank = not counted; zero is a count. Enter whole pieces for every
+            required component.
+          </p>
           <div
             className="table-region"
             role="region"
@@ -319,7 +350,7 @@ export function VerificationTerminal({
                   <th>Component</th>
                   <th className="numeric">Expected</th>
                   <th>Actual pieces</th>
-                  <th className="numeric">Variance</th>
+                  <th className="numeric">Difference</th>
                   <th>Result</th>
                 </tr>
               </thead>
@@ -333,10 +364,21 @@ export function VerificationTerminal({
                     Number.isNaN(actual) ||
                     (actual === null && item?.actualQty != null);
                   const blocked = blockedComponents.includes(c.componentId);
+                  const result = componentResult(c.expectedQty, actual);
+                  const tone =
+                    !item || invalidRow
+                      ? "invalid"
+                      : result === "GREEN"
+                        ? "match"
+                        : result === "YELLOW"
+                          ? "excess"
+                          : result === "RED"
+                            ? "shortage"
+                            : "uncounted";
                   return (
-                    <tr key={c.componentId}>
+                    <tr key={c.componentId} className={`result-${tone}`}>
                       <th scope="row">{c.name}</th>
-                      <td className="numeric">{c.expectedQty}</td>
+                      <td className="numeric">{formatCount(c.expectedQty)}</td>
                       <td>
                         <label
                           className="sr-only"
@@ -351,7 +393,7 @@ export function VerificationTerminal({
                           value={counts[c.componentId] ?? ""}
                           disabled={busy || own || stale || !item}
                           aria-invalid={invalidRow || blocked}
-                          aria-describedby={`count-help-${c.componentId}`}
+                          aria-describedby={`count-table-help${invalidRow || blocked || !item || reviewing ? ` count-help-${c.componentId}` : ""}`}
                           onChange={(e) => {
                             setCounts((current) => ({
                               ...current,
@@ -362,6 +404,9 @@ export function VerificationTerminal({
                         />
                         <p
                           id={`count-help-${c.componentId}`}
+                          hidden={
+                            !(invalidRow || blocked || !item || reviewing)
+                          }
                           className={
                             invalidRow || blocked ? "field-error" : "helper"
                           }
@@ -374,7 +419,7 @@ export function VerificationTerminal({
                                 ? "Incomplete data: required item is missing."
                                 : reviewing
                                   ? `Saved: ${item.actualQty ?? "Not counted"}`
-                                  : "Blank = not counted; zero is a count."}
+                                  : ""}
                         </p>
                       </td>
                       <td className="numeric">
@@ -383,10 +428,11 @@ export function VerificationTerminal({
                           : `${actual - c.expectedQty >= 0 ? "+" : ""}${actual - c.expectedQty}`}
                       </td>
                       <td>
-                        {!item ? (
-                          "Incomplete data"
-                        ) : invalidRow ? (
-                          "Invalid count"
+                        {!item || invalidRow ? (
+                          <span className="component-status shortage">
+                            <CircleAlert size={16} aria-hidden="true" />
+                            {!item ? "Incomplete data" : "Invalid count"}
+                          </span>
                         ) : (
                           <ComponentStatus
                             expected={c.expectedQty}
@@ -403,7 +449,7 @@ export function VerificationTerminal({
           <div className="actions operational-section">
             <button
               type="button"
-              className="button"
+              className="button primary"
               disabled={busy || own || stale || invalid || !dirty}
               onClick={() => void save()}
             >
@@ -424,11 +470,23 @@ export function VerificationTerminal({
             )}
           </div>
           <div className="decision-actions">
-            <p id="approval-blocker">{blocker}</p>
+            <div
+              className={`decision-callout ${canApprove ? "eligible" : "blocked"}`}
+            >
+              <span aria-hidden="true">
+                {canApprove ? <Check size={20} /> : <CircleAlert size={20} />}
+              </span>
+              <div>
+                <strong>
+                  {canApprove ? "Ready to approve" : "Approval blocked"}
+                </strong>
+                <p id="approval-blocker">{blocker}</p>
+              </div>
+            </div>
             <div className="actions">
               <button
                 type="button"
-                className="button primary"
+                className="button primary approve"
                 disabled={!canApprove}
                 aria-describedby="approval-blocker"
                 onClick={() => setAction("approve")}
@@ -504,7 +562,7 @@ export function VerificationTerminal({
             Cancel
           </button>
           <button
-            className={`button ${action === "reject" ? "destructive" : "primary"}`}
+            className={`button ${action === "reject" ? "destructive" : "primary approve"}`}
             disabled={busy || (action === "approve" && !canApprove)}
             onClick={() => void decide()}
           >

@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/http/client";
 import { orderStatuses, type OrderPage } from "@/modules/orders/types";
-export function statusLabel(status: string) {
-  return status
-    .toLowerCase()
-    .replaceAll("_", " ")
-    .replace(/^./, (s) => s.toUpperCase());
-}
+import { StatusBadge, statusLabel } from "@/components/shared/semantic-status";
+import {
+  HumanDateTime,
+  displayTimezone,
+  formatCount,
+} from "@/components/shared/data-display";
+import { ChevronRight } from "lucide-react";
 export function OrderList() {
   const [result, setResult] = useState<OrderPage | null>(null);
   const [error, setError] = useState("");
@@ -100,7 +101,7 @@ export function OrderList() {
         </p>
       )}
       <p className="helper" role="status">
-        {busy ? "Loading orders…" : "Times shown in UTC."}
+        {busy ? "Loading orders…" : `Times: ${displayTimezone}.`}
       </p>
       <div
         className="table-region"
@@ -116,29 +117,29 @@ export function OrderList() {
               <th>Recipe</th>
               <th className="numeric">Garments</th>
               <th>State</th>
-              <th>Updated (UTC)</th>
+              <th>Updated</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {result?.items.map((order) => (
               <tr key={order.id}>
-                <td>{order.orderNo}</td>
+                <td className="primary-data order-number">{order.orderNo}</td>
                 <td>
-                  {order.recipeName}
+                  <span className="primary-data">{order.recipeName}</span>
                   <span className="helper block">{order.recipeCode}</span>
                 </td>
-                <td className="numeric">{order.targetQty}</td>
-                <td>{statusLabel(order.status)}</td>
+                <td className="numeric">{formatCount(order.targetQty)}</td>
                 <td>
-                  {new Date(order.updatedAt)
-                    .toISOString()
-                    .replace("T", " ")
-                    .slice(0, 19)}
+                  <StatusBadge status={order.status} />
                 </td>
                 <td>
-                  <Link href={`/supervisor/${order.id}`}>
+                  <HumanDateTime value={order.updatedAt} stacked />
+                </td>
+                <td>
+                  <Link className="row-action" href={`/supervisor/${order.id}`}>
                     Open batch<span className="sr-only"> {order.orderNo}</span>
+                    <ChevronRight size={14} aria-hidden="true" />
                   </Link>
                 </td>
               </tr>

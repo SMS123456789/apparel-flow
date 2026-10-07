@@ -288,9 +288,14 @@ test("private admin users, guarded dialogs and audit screen", async ({
     await expect(details).toBeVisible();
   }
   await details.click();
-  await expect(page.locator(".audit-details").first()).toContainText(
-    "Request:",
-  );
+  await page
+    .getByText("Technical audit details", { exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByText("Request ID", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(page.locator(".audit-details").first()).toContainText("Before:");
 });
 test("real admin updates immediately change profile authority and append audit", async ({
   context,
@@ -304,7 +309,9 @@ test("real admin updates immediately change profile authority and append audit",
     }
   ).data;
   const target = listing.items.find(
-    (user) => user.role === "CUTTING_SUPERVISOR",
+    (user) =>
+      user.role === "CUTTING_SUPERVISOR" &&
+      user.email === process.env.DEMO_CUTTING_SUPERVISOR_EMAIL,
   )!;
   expect(Boolean(target)).toBe(true);
   const production = await browser.newContext({ baseURL: origin });

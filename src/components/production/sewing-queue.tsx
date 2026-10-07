@@ -3,6 +3,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/http/client";
 import type { SewingPage } from "@/modules/sewing/types";
+import { StatusBadge } from "@/components/shared/semantic-status";
+import {
+  HumanDateTime,
+  PercentageDisplay,
+  displayTimezone,
+  formatCount,
+} from "@/components/shared/data-display";
+import { ChevronRight } from "lucide-react";
 export function SewingQueue() {
   const [result, setResult] = useState<SewingPage | null>(null),
     [error, setError] = useState(""),
@@ -72,7 +80,7 @@ export function SewingQueue() {
         </p>
       )}
       <p className="helper" role="status">
-        {busy ? "Loading batches…" : "Times shown in UTC."}
+        {busy ? "Loading batches…" : `Times: ${displayTimezone}.`}
       </p>
       <div
         className="table-region"
@@ -86,7 +94,7 @@ export function SewingQueue() {
               <th>Order</th>
               <th>Recipe</th>
               <th className="numeric">Garments</th>
-              <th>Verified by / time (UTC)</th>
+              <th>Verified by / time</th>
               <th>Signed fabric variance</th>
               <th>Assembly</th>
               <th>Action</th>
@@ -95,21 +103,30 @@ export function SewingQueue() {
           <tbody>
             {result?.items.map((o) => (
               <tr key={o.id}>
-                <td>{o.orderNo}</td>
+                <td className="primary-data order-number">{o.orderNo}</td>
                 <td>
-                  {o.recipeName}
+                  <span className="primary-data">{o.recipeName}</span>
                   <span className="helper block">{o.recipeCode}</span>
                 </td>
-                <td className="numeric">{o.targetQty}</td>
+                <td className="numeric">{formatCount(o.targetQty)}</td>
                 <td>
                   {o.verifierName}
-                  <span className="helper block">{o.verifiedAt} (UTC)</span>
+                  <span className="helper block">
+                    <HumanDateTime value={o.verifiedAt} stacked />
+                  </span>
                 </td>
-                <td className="numeric">{o.wastagePct}%</td>
-                <td>{o.sewingStartedAt ? "Started" : "Ready"}</td>
+                <td className="numeric">
+                  <PercentageDisplay value={o.wastagePct} />
+                </td>
                 <td>
-                  <Link href={`/sewing/${o.id}`}>
+                  <StatusBadge
+                    status={o.sewingStartedAt ? "STARTED" : "READY"}
+                  />
+                </td>
+                <td>
+                  <Link className="row-action" href={`/sewing/${o.id}`}>
                     Open batch<span className="sr-only"> {o.orderNo}</span>
+                    <ChevronRight size={14} aria-hidden="true" />
                   </Link>
                 </td>
               </tr>

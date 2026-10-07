@@ -4,6 +4,13 @@ import Link from "next/link";
 import { api, ApiClientError } from "@/lib/http/client";
 import type { SewingDetail as Batch } from "@/modules/sewing/types";
 import { ActionDialog } from "@/components/shared/action-dialog";
+import { StatusBadge } from "@/components/shared/semantic-status";
+import {
+  HumanDateTime,
+  PercentageDisplay,
+  displayTimezone,
+  formatCount,
+} from "@/components/shared/data-display";
 import { DecisionHistory } from "./decision-history";
 export function SewingDetail({ orderId }: { orderId: string }) {
   const [batch, setBatch] = useState<Batch | null>(null),
@@ -79,12 +86,16 @@ export function SewingDetail({ orderId }: { orderId: string }) {
         <div>
           <h1>{batch.orderNo}</h1>
           <p className="intro">
-            {batch.recipeCode} · {batch.recipeName} · {batch.targetQty} garments
-            · Verified
+            <strong>{batch.recipeName}</strong> · {formatCount(batch.targetQty)}{" "}
+            garments
           </p>
-          <p className="helper">
+          <div className="batch-context">
+            <StatusBadge status="VERIFIED" />
+            <span className="helper">{batch.recipeCode}</span>
+          </div>
+          <p className="helper intro">
             Roll {batch.fabricRollId} · Verified by {batch.verifierName} ·{" "}
-            {batch.verifiedAt} (UTC)
+            <HumanDateTime value={batch.verifiedAt} /> · {displayTimezone}
           </p>
         </div>
         <Link className="button" href="/sewing">
@@ -99,20 +110,38 @@ export function SewingDetail({ orderId }: { orderId: string }) {
       <section className="operational-section">
         <h2>Assembly start</h2>
         {batch.sewingStartedAt ? (
-          <>
-            <p role="status" className="intro">
-              Sewing assembly started.
-            </p>
-            <p className="helper">
-              Started by {batch.startedBy} · {batch.sewingStartedAt} (UTC).
-              Batch remains VERIFIED.
-            </p>
-          </>
+          <div className="assembly-state started">
+            <div>
+              <p role="status">
+                <StatusBadge status="STARTED" />
+              </p>
+              <p className="intro">
+                <HumanDateTime value={batch.sewingStartedAt} /> ·{" "}
+                {displayTimezone}
+              </p>
+              <details className="technical-details">
+                <summary>Assembly audit details</summary>
+                <dl>
+                  <div>
+                    <dt>Started by (actor ID)</dt>
+                    <dd>{batch.startedBy}</dd>
+                  </div>
+                  <div>
+                    <dt>Exact start time</dt>
+                    <dd>{batch.sewingStartedAt} (UTC)</dd>
+                  </div>
+                </dl>
+              </details>
+            </div>
+          </div>
         ) : (
-          <>
-            <p className="intro">
-              Approved pieces are ready for sewing assembly.
-            </p>
+          <div className="assembly-state">
+            <div>
+              <StatusBadge status="READY" />
+              <p className="intro">
+                Approved pieces are ready for sewing assembly.
+              </p>
+            </div>
             <button
               className="button primary"
               disabled={busy || stale}
@@ -120,7 +149,7 @@ export function SewingDetail({ orderId }: { orderId: string }) {
             >
               Start Sewing Assembly
             </button>
-          </>
+          </div>
         )}
         {(stale || error) && (
           <button
@@ -133,14 +162,15 @@ export function SewingDetail({ orderId }: { orderId: string }) {
         )}
       </section>
       <p className="helper">
-        Fabric cap {batch.wastageCapPct}% is informational. Signed fabric
-        variance is retained in the approved evidence.
+        Fabric cap <PercentageDisplay value={batch.wastageCapPct} /> is
+        informational. Signed fabric variance is retained in the approved
+        evidence.
       </p>
       <DecisionHistory evidence={[batch.evidence]} />
       <ActionDialog
         open={confirm}
         title="Start Sewing Assembly"
-        description={`Record assembly start for ${batch.orderNo}. Approved evidence remains immutable and the batch remains VERIFIED.`}
+        description={`Record assembly start for ${batch.orderNo}. Approved evidence remains immutable and the batch remains Verified.`}
         busy={busy}
         onCancel={() => {
           if (!busy) setConfirm(false);

@@ -13,6 +13,11 @@ import {
   type AppRole,
 } from "@/modules/identity/types";
 import type { AdminUser, PageResult } from "@/modules/admin/types";
+import { StatusBadge, RoleBadge } from "@/components/shared/semantic-status";
+import {
+  HumanDateTime,
+  displayTimezone,
+} from "@/components/shared/data-display";
 import { AdminDialog } from "./admin-dialog";
 type Action = { kind: "create" } | { kind: "role" | "status"; user: AdminUser };
 export function UsersPanel() {
@@ -257,34 +262,36 @@ export function UsersPanel() {
               tabIndex={0}
             >
               <table>
-                <caption>Application accounts</caption>
+                <caption>Application accounts · {displayTimezone}</caption>
                 <thead>
                   <tr>
                     <th scope="col">Name</th>
                     <th scope="col">Email</th>
                     <th scope="col">Role</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Created (local)</th>
+                    <th scope="col">Created</th>
                     <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {page.items.map((user) => (
                     <tr key={user.id}>
-                      <td>{user.fullName}</td>
+                      <td className="primary-data">{user.fullName}</td>
                       <td>{user.email}</td>
-                      <td>{roleLabels[user.role]}</td>
-                      <td>{user.isActive ? "Active" : "Inactive"}</td>
                       <td>
-                        <time dateTime={user.createdAt}>
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </time>
+                        <RoleBadge role={user.role} />
+                      </td>
+                      <td>
+                        <StatusBadge
+                          status={user.isActive ? "ACTIVE" : "INACTIVE"}
+                        />
+                      </td>
+                      <td>
+                        <HumanDateTime value={user.createdAt} stacked />
                       </td>
                       <td>
                         {user.role === "SYSTEM_ADMIN" ? (
-                          <span className="helper">
-                            Protected administrator
-                          </span>
+                          <StatusBadge status="PROTECTED" />
                         ) : (
                           <div className="actions">
                             <button
@@ -295,7 +302,7 @@ export function UsersPanel() {
                               Change Role
                             </button>
                             <button
-                              className="button secondary"
+                              className={`button secondary ${user.isActive ? "reject-entry" : ""}`}
                               aria-label={`${user.isActive ? "Deactivate" : "Activate"} ${user.fullName}`}
                               onClick={() => open({ kind: "status", user })}
                             >

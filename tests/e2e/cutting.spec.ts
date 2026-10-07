@@ -65,9 +65,7 @@ test("supervisor creates, edits, submits and reloads a frozen batch", async ({
   await page
     .getByRole("button", { name: "Confirm submission", exact: true })
     .click();
-  await expect(
-    page.getByText("Pending verification", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Waiting for QC", { exact: true })).toBeVisible();
   await page.reload();
   await expect(
     page.getByLabel("Actual fabric used (yards, required)"),

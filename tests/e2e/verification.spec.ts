@@ -113,7 +113,10 @@ test("verifier persists zero, rejects shortage, recounts re-cut and signs immuta
   const rejected = (
     await (await context.request.get(`/api/verification/${order.id}`)).json()
   ).data as OrderDetail;
-  expect(rejected.evidence[0]!.items[0]!.actualQty).toBe(0);
+  expect(
+    rejected.evidence[0]!.items.find((item) => item.name === "Front Body Panel")
+      ?.actualQty,
+  ).toBe(0);
   expect(rejected.evidence[0]!.wastagePct).toBe("-10.000000000000");
   await persona(page, context, "SEWING_SUPERVISOR", "/sewing");
   expect((await context.request.get(`/api/sewing/${order.id}`)).status()).toBe(
@@ -151,9 +154,7 @@ test("verifier persists zero, rejects shortage, recounts re-cut and signs immuta
   await page
     .getByRole("button", { name: "Confirm submission", exact: true })
     .click();
-  await expect(
-    page.getByText("Pending verification", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Waiting for QC", { exact: true })).toBeVisible();
   await persona(page, context, "CUTTING_VERIFIER", `/verifier/${order.id}`);
   for (const c of order.components) {
     const field = page.getByLabel(`${c.name} actual pieces`, { exact: true });
@@ -229,10 +230,10 @@ test("verifier persists zero, rejects shortage, recounts re-cut and signs immuta
     .getByRole("button", { name: "Confirm assembly start", exact: true })
     .click();
   await expect(
-    page.getByText("Sewing assembly started.", { exact: true }),
+    page.getByText("Assembly started", { exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByText("Sewing assembly started.", { exact: true }),
+    page.getByText("Assembly started", { exact: true }),
   ).toBeVisible();
 });

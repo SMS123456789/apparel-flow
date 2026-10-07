@@ -72,9 +72,7 @@ test("three-persona happy path, VERIFIED-only handoff, assembly start and produc
   await page
     .getByRole("button", { name: "Confirm submission", exact: true })
     .click();
-  await expect(
-    page.getByText("Pending verification", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Waiting for QC", { exact: true })).toBeVisible();
   await persona(page, context, "sewing-supervisor", "/sewing");
   expect((await context.request.get(`/api/sewing/${id}`)).status()).toBe(404);
   const hidden = await context.request.get(
@@ -262,11 +260,11 @@ test("three-persona happy path, VERIFIED-only handoff, assembly start and produc
     .getByRole("button", { name: "Confirm assembly start", exact: true })
     .click();
   await expect(
-    page.getByText("Sewing assembly started.", { exact: true }),
+    page.getByText("Assembly started", { exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByText("Sewing assembly started.", { exact: true }),
+    page.getByText("Assembly started", { exact: true }),
   ).toBeVisible();
   const started = (
     await (await context.request.get(`/api/sewing/${id}`)).json()

@@ -1,3 +1,4 @@
+import { Factory } from "lucide-react";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { getCurrentUser } from "@/server/auth/context";
@@ -35,7 +36,10 @@ export default async function LoginPage({
   return (
     <>
       <header className="login-header">
-        <span className="brand">ApparelFlow</span>
+        <span className="brand">
+          <Factory size={20} aria-hidden="true" />
+          ApparelFlow
+        </span>
         <span>Factory operations</span>
       </header>
       <main className="login-main">

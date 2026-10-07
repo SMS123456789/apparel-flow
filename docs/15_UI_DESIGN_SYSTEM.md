@@ -4,8 +4,8 @@
 contract for all future ApparelFlow frontend/UI work. Read it before implementing
 or changing any page or component. Overrides require explicit human approval.
 
-**Scope:** UX00 is documentation only. It creates this contract and the root
-[AGENTS.md](../AGENTS.md) instruction. Do not implement pages, components, CSS,
+**Historical scope:** UX00 was documentation only. It created this contract and
+the root [AGENTS.md](../AGENTS.md) instruction. Do not implement pages, components, CSS,
 tokens in code, or dependencies during UX00. Stop after documentation.
 
 The visual choices here are implementation design decisions within the approved
@@ -30,8 +30,9 @@ AI-generated SaaS dashboard, marketing website, or playful consumer application.
 Operational tasks determine the content and hierarchy of each screen.
 
 Use a light neutral application background, white primary work surfaces, dark
-legible typography, restrained borders, one blue brand/accent family, and
-green/yellow/red reserved for operational meaning. Prefer tables, compact forms,
+legible typography and restrained borders. UIX01 explicitly authorizes blue
+Cutting, indigo Verification, teal Sewing and slate Admin role accents, with
+green/amber/red reserved for operational meaning. Prefer tables, compact forms,
 clear section headings, relatively square controls, and minimal shadows. Dark
 mode is outside the initial requirement.
 
@@ -239,14 +240,16 @@ Submit for verification, Approve, Reject, and Start Sewing Assembly.
 
 | Hierarchy   | Appearance                                                                                            | Use                                                                     |
 | ----------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Primary     | Blue fill, white text; darker blue hover.                                                             | The main next action, subject to workflow eligibility.                  |
-| Secondary   | White fill, dark text, control border; neutral hover.                                                 | Related actions such as Save Counts when Approve is primary, or Cancel. |
+| Primary     | Role/workflow fill, white text; darker semantic hover.                                                | The main next action, subject to workflow eligibility.                  |
+| Secondary   | White fill, dark text, control border; neutral hover.                                                 | Supporting actions such as Cancel, Back, or reloading saved evidence.   |
 | Destructive | Red text/control boundary for entry; red fill with white text for the final destructive confirmation. | Reject, deactivate, or discard with explicit wording.                   |
 | Ghost/text  | No persistent container; dark or blue text, neutral hover, visible focus.                             | Lower-priority navigation or row actions where justified.               |
 
 These are four hierarchy roles, not permission to invent competing styles for
 every page. Keep destructive actions apart from the primary action with spacing
-and explicit labels. Do not color Approve green merely to add a fifth style.
+and explicit labels. UIX01 uses green for eligible Approve, indigo for Save Counts,
+teal for Start Sewing, blue for cutting actions and slate for administration.
+These are semantic variants of the existing primary hierarchy.
 Never make an action available only on hover. Icon-only controls need an
 accessible name and enough target area; use text for consequential actions.
 
@@ -529,3 +532,81 @@ Before considering a page complete, ask:
 
 If the latter, simplify it. UX00 ends with documentation; future UI implementation
 requires its separately authorized task and must obey this contract.
+
+## UIX01 — approved semantic refinement
+
+UIX01 authorizes presentation only. APIs, queries, role permissions, count/save
+eligibility, transitions, Auth and immutable data remain unchanged.
+
+| Meaning | Text / primary action | Hover | Soft tint |
+| --- | --- | --- | --- |
+| Cutting / blue | `--af-primary: #1E40AF` | `--af-primary-hover: #1E3A8A` | `--af-selected-bg: #EFF6FF` |
+| Verification / indigo | `--af-indigo: #4338CA` | `--af-indigo-hover: #3730A3` | `--af-indigo-bg: #EEF2FF` |
+| Sewing / teal | `--af-teal: #115E59` | `--af-teal-hover: #134E4A` | `--af-teal-bg: #F0FDFA` |
+| Administration / slate | `--af-slate: #334155` | `--af-slate-hover: #1E293B` | `--af-slate-bg: #F1F5F9` |
+| Approved / assembly started | Existing Match tokens | `--af-success-hover: #14532D` | Existing Match background |
+| Rejected / shortage | Existing Shortage tokens | Existing destructive hover | Existing Shortage background |
+| Excess | Existing Excess tokens | — | Existing Excess background |
+
+Central StatusBadge and RoleBadge components pair a 16px monochrome icon with
+human-readable text and a soft tint. ComponentStatus uses Match/Excess/Shortage/
+Not counted; the verifier table uses the same meanings in subtle row tints.
+Waiting for QC is the presentation label for PENDING_VERIFICATION; Ready is
+assembly availability, not a new production state. Started stays less prominent
+than actionable Ready. No raw enum labels appear in operational content.
+
+The compact header groups user name and role; navigation has task icons and a
+role-colored active marker, including nested detail pages. Order numbers remain
+prominent. Filters share a restrained neutral region. Primary data is stronger
+than metadata; forms use section headings and dividers, not nested cards.
+
+Dates use a deterministic `en-US` display in `Asia/Colombo` (Sri Lanka,
+UTC+05:30), with the timezone stated in table context. Exact original timestamps
+remain in semantic time attributes/tooltips and expandable audit details.
+Percentages display two decimal places, retaining signed negative values; exact
+decimal strings remain in titles/audit details. Counts use tabular numerals and
+grouping for display only. Inputs are never rounded or reformatted.
+
+Verification history keeps approved/rejected outcome, verifier and time easy to
+scan. UUIDs, original timestamps and exact fabric percentages are secondary in
+native expandable details. Admin audit shows labeled before/after differences;
+raw JSON and attribution IDs remain in technical details. Sewing starter name
+is not present in the existing API: keep its exact actor ID in audit details,
+without inventing a name or changing queries.
+
+One table-level explanation of blank versus zero is associated with every count
+input. Row-specific errors/reloaded saved values keep their own descriptions.
+Approval's existing blocker is visually foregrounded; its existing eligibility
+logic remains authoritative. All new semantic colors must meet the mandatory
+text/control contrast contract, with existing focus/dialog/touch/reflow rules.
+
+### UIX01 implementation review — 7 October 2026
+
+Before implementation, all existing role screens were navigated with the real
+demo personas and private administrator. Final review covered 13 screens at
+1280, 768, 375 and 320px: 52 local screenshots, including active/finalized
+verification and ready/started sewing. There was no page-level horizontal
+overflow; operational tables keep their accessible scroll regions. Order
+numbers stay intact within tables. At 320px the header places user/role below
+the brand and sign-out control to avoid squeezed identity text.
+
+Computed visible text contrast was at least **6.10:1**; input/button boundaries
+were at least **4.39:1** against their adjacent surface. Existing browser checks
+also passed focused, disabled, invalid and read-only controls, native selects,
+keyboard/dialog focus and 200% text enlargement. Count inputs retain 16px text
+and 40px desktop / 44px narrow-screen targets. Status icons retain text labels.
+
+On Node 22.23.2 / npm 10.9.8: typecheck, lint, formatting, **215 unit/integration
+tests**, **23 browser tests** and production build passed. One duplicate mobile
+UI review is intentionally skipped; the desktop review already checks all four
+widths. UI selectors reflect the human labels and expandable audit details.
+Two existing test assumptions were corrected: select the configured demo
+supervisor whose session is tested, and identify the zero-counted component
+instead of assuming evidence array order. Fixtures, expected results and
+security assertions remain unchanged.
+
+Source comparison confirmed unchanged API calls, effects, mutation/event
+handlers, disabled/read-only attributes and eligibility declarations. No API,
+schema, query, Auth or permission files changed. The private-value and browser
+bundle scan passed. Native tables, filters, selects and dialog behavior remain
+in use because they support the existing factory tasks and accessibility rules.

@@ -1,5 +1,6 @@
 import { Check, TriangleAlert, CircleAlert, Minus } from "lucide-react";
 import { componentResult } from "@/modules/verification/rules";
+import { formatCount } from "@/components/shared/data-display";
 export function ComponentStatus({
   expected,
   actual,
@@ -26,13 +27,13 @@ export function ComponentStatus({
     return (
       <span className="component-status excess">
         <TriangleAlert size={16} aria-hidden="true" />
-        Excess +{actual! - expected}
+        Excess +{formatCount(actual! - expected)}
       </span>
     );
   return (
     <span className="component-status shortage">
       <CircleAlert size={16} aria-hidden="true" />
-      Shortage {expected - actual!}
+      Shortage {formatCount(expected - actual!)}
     </span>
   );
 }

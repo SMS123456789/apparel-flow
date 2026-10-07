@@ -7,7 +7,15 @@ import { createOrderSchema } from "@/modules/orders/schemas";
 import { expectedFabric, requirements } from "@/modules/orders/calculations";
 import type { OrderDetail, Recipe } from "@/modules/orders/types";
 import { ActionDialog } from "@/components/shared/action-dialog";
-import { statusLabel } from "./order-list";
+import {
+  StatusBadge,
+  FrozenIndicator,
+} from "@/components/shared/semantic-status";
+import { DecisionHistory } from "./decision-history";
+import {
+  formatCount,
+  PercentageDisplay,
+} from "@/components/shared/data-display";
 export function OrderPreparation({ orderId }: { orderId?: string }) {
   const router = useRouter();
   const [order, setOrder] = useState<OrderDetail | null>(null);
@@ -207,11 +215,15 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
       <div className="page-heading">
         <div>
           <h1>{order ? order.orderNo : "Create cutting order"}</h1>
-          <p className="intro">
-            {order
-              ? statusLabel(order.status)
-              : "Save preparation before submitting the batch."}
-          </p>
+          <div className="batch-context">
+            {order ? (
+              <StatusBadge status={order.status} />
+            ) : (
+              <p className="intro">
+                Save preparation before submitting the batch.
+              </p>
+            )}
+          </div>
         </div>
         <Link
           className="button"
@@ -257,109 +269,124 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
           void save();
         }}
       >
-        <div className="form-grid">
-          <div className="field">
-            <label htmlFor="recipe">Recipe (required)</label>
-            <select
-              id="recipe"
-              required
-              value={form.recipeId}
-              disabled={!editable || frozen || busy}
-              aria-invalid={Boolean(fields.recipeId?.length)}
-              aria-describedby={
-                fields.recipeId?.length ? "recipe-error" : undefined
-              }
-              onChange={(e) => update("recipeId", e.target.value)}
-            >
-              {recipes.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.code} — {r.name}
-                </option>
-              ))}
-            </select>
-            {Boolean(fields.recipeId?.length) && (
-              <p id="recipe-error" className="field-error">
-                {errorText("recipeId")}
+        <fieldset className="form-section">
+          <legend>Order information</legend>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="recipe">Recipe (required)</label>
+              <select
+                id="recipe"
+                required
+                value={form.recipeId}
+                disabled={!editable || frozen || busy}
+                aria-invalid={Boolean(fields.recipeId?.length)}
+                aria-describedby={
+                  fields.recipeId?.length ? "recipe-error" : undefined
+                }
+                onChange={(e) => update("recipeId", e.target.value)}
+              >
+                {recipes.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.code} — {r.name}
+                  </option>
+                ))}
+              </select>
+              {Boolean(fields.recipeId?.length) && (
+                <p id="recipe-error" className="field-error">
+                  {errorText("recipeId")}
+                </p>
+              )}
+            </div>
+            <div className="field">
+              <label htmlFor="target">
+                Target batch quantity (garments, required)
+              </label>
+              <input
+                id="target"
+                inputMode="numeric"
+                required
+                value={form.targetQty}
+                readOnly={!editable || frozen}
+                disabled={busy}
+                aria-invalid={Boolean(fields.targetQty?.length)}
+                aria-describedby={
+                  fields.targetQty?.length ? "target-error" : undefined
+                }
+                onChange={(e) => update("targetQty", e.target.value)}
+              />
+              {Boolean(fields.targetQty?.length) && (
+                <p id="target-error" className="field-error">
+                  {errorText("targetQty")}
+                </p>
+              )}
+            </div>
+          </div>
+        </fieldset>
+        <fieldset className="form-section">
+          <legend>Fabric information</legend>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="roll">Fabric roll ID (required)</label>
+              <input
+                id="roll"
+                required
+                maxLength={100}
+                value={form.fabricRollId}
+                readOnly={!editable}
+                disabled={busy}
+                aria-invalid={Boolean(fields.fabricRollId?.length)}
+                aria-describedby={
+                  fields.fabricRollId?.length ? "roll-error" : undefined
+                }
+                onChange={(e) => update("fabricRollId", e.target.value)}
+              />
+              {Boolean(fields.fabricRollId?.length) && (
+                <p id="roll-error" className="field-error">
+                  {errorText("fabricRollId")}
+                </p>
+              )}
+            </div>
+            <div className="field">
+              <label htmlFor="fabric">
+                Actual fabric used (yards, required)
+              </label>
+              <input
+                id="fabric"
+                inputMode="decimal"
+                required
+                value={form.actualFabricYards}
+                readOnly={!editable}
+                disabled={busy}
+                aria-invalid={Boolean(fields.actualFabricYards?.length)}
+                aria-describedby="fabric-help fabric-error"
+                onChange={(e) => update("actualFabricYards", e.target.value)}
+              />
+              <p id="fabric-help" className="helper">
+                Positive yards, at most three decimal places.
               </p>
-            )}
-          </div>
-          <div className="field">
-            <label htmlFor="target">
-              Target batch quantity (garments, required)
-            </label>
-            <input
-              id="target"
-              inputMode="numeric"
-              required
-              value={form.targetQty}
-              readOnly={!editable || frozen}
-              disabled={busy}
-              aria-invalid={Boolean(fields.targetQty?.length)}
-              aria-describedby={
-                fields.targetQty?.length ? "target-error" : undefined
-              }
-              onChange={(e) => update("targetQty", e.target.value)}
-            />
-            {Boolean(fields.targetQty?.length) && (
-              <p id="target-error" className="field-error">
-                {errorText("targetQty")}
+              <p id="fabric-error" className="field-error">
+                {errorText("actualFabricYards")}
               </p>
-            )}
+            </div>
           </div>
-          <div className="field">
-            <label htmlFor="roll">Fabric roll ID (required)</label>
-            <input
-              id="roll"
-              required
-              maxLength={100}
-              value={form.fabricRollId}
-              readOnly={!editable}
-              disabled={busy}
-              aria-invalid={Boolean(fields.fabricRollId?.length)}
-              aria-describedby={
-                fields.fabricRollId?.length ? "roll-error" : undefined
-              }
-              onChange={(e) => update("fabricRollId", e.target.value)}
-            />
-            {Boolean(fields.fabricRollId?.length) && (
-              <p id="roll-error" className="field-error">
-                {errorText("fabricRollId")}
-              </p>
-            )}
-          </div>
-          <div className="field">
-            <label htmlFor="fabric">Actual fabric used (yards, required)</label>
-            <input
-              id="fabric"
-              inputMode="decimal"
-              required
-              value={form.actualFabricYards}
-              readOnly={!editable}
-              disabled={busy}
-              aria-invalid={Boolean(fields.actualFabricYards?.length)}
-              aria-describedby="fabric-help fabric-error"
-              onChange={(e) => update("actualFabricYards", e.target.value)}
-            />
-            <p id="fabric-help" className="helper">
-              Positive yards, at most three decimal places.
-            </p>
-            <p id="fabric-error" className="field-error">
-              {errorText("actualFabricYards")}
-            </p>
-          </div>
-        </div>
+        </fieldset>
         <div className="operational-section">
-          <h2>
-            {frozen
-              ? "Frozen requirements"
-              : "Recipe requirements — preparation preview"}
-          </h2>
+          <div className="section-heading">
+            <h2>
+              {frozen
+                ? "Frozen requirements"
+                : "Recipe requirements — preparation preview"}
+            </h2>
+            {frozen && <FrozenIndicator />}
+          </div>
           <p className="intro">
             {recipe?.category} · Standard {recipe?.standardFabricYards}{" "}
             yards/garment · Expected fabric: <strong>{fabric} yards</strong>
           </p>
           <p className="helper">
-            Wastage cap {recipe?.wastageCapPct}% is informational.{" "}
+            Wastage cap{" "}
+            {recipe && <PercentageDisplay value={recipe.wastageCapPct} />} is
+            informational.{" "}
             {frozen
               ? "Recipe, target and BOM are read-only after first submission."
               : "First submission freezes recipe, target and the full component manifest."}
@@ -383,7 +410,9 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
                   <tr key={c.componentId}>
                     <td>{c.name}</td>
                     <td className="numeric">{c.piecesPerGarment}</td>
-                    <td className="numeric">{c.expectedQty}</td>
+                    <td className="numeric numeric-emphasis">
+                      {formatCount(c.expectedQty)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -404,7 +433,7 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
           {order && editable && (
             <button
               type="button"
-              className="button"
+              className="button primary"
               disabled={busy || dirty}
               onClick={() => setAction("submit")}
             >
@@ -427,54 +456,11 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
         )}
       </form>
       {order && (
-        <section className="operational-section">
-          <h2>Verification history</h2>
-          {order.evidence.length === 0 ? (
-            <p className="intro">No finalized verification decisions yet.</p>
-          ) : (
-            order.evidence.map((e) => (
-              <details key={e.id}>
-                <summary>
-                  {e.decision === "APPROVED" ? "Approved" : "Rejected"} ·{" "}
-                  {e.verifierName} · {e.createdAt} (UTC)
-                </summary>
-                <p>{e.reason}</p>
-                <p className="helper">
-                  Fabric wastage: {e.wastagePct}% · Verifier ID: {e.verifierId}
-                </p>
-                <div
-                  className="table-region"
-                  role="region"
-                  aria-label="Historical component evidence"
-                  tabIndex={0}
-                >
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Component</th>
-                        <th className="numeric">Expected</th>
-                        <th className="numeric">Actual</th>
-                        <th>Result</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {e.items.map((i) => (
-                        <tr key={i.componentId}>
-                          <td>{i.name}</td>
-                          <td className="numeric">{i.expectedQty}</td>
-                          <td className="numeric">
-                            {i.actualQty ?? "Not counted"}
-                          </td>
-                          <td>{i.status ?? "Not counted"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </details>
-            ))
-          )}
-        </section>
+        <DecisionHistory
+          evidence={order.evidence}
+          title="Verification history"
+          expanded={false}
+        />
       )}
       <ActionDialog
         open={action !== null}

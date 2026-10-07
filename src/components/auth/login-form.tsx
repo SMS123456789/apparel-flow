@@ -6,6 +6,7 @@ import {
   type DemoPersona,
 } from "@/modules/identity/types";
 import { api, ApiClientError } from "@/lib/http/client";
+import { RoleIcon } from "@/components/shared/semantic-status";
 interface LoginResult {
   user: AuthenticatedUser;
   redirectTo: string;
@@ -125,6 +126,7 @@ export function LoginForm({
               key={persona.id}
               type="button"
               className="button secondary"
+              data-role={persona.role}
               disabled={Boolean(busy) || !enabledPersonas.includes(persona.id)}
               onClick={() =>
                 void signIn(
@@ -134,6 +136,7 @@ export function LoginForm({
                 )
               }
             >
+              <RoleIcon role={persona.role} size={18} />
               {persona.label}
             </button>
           ))}

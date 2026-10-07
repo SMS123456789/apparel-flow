@@ -6,6 +6,7 @@ import { api, ApiClientError } from "@/lib/http/client";
 import { createOrderSchema } from "@/modules/orders/schemas";
 import { expectedFabric, requirements } from "@/modules/orders/calculations";
 import type { OrderDetail, Recipe } from "@/modules/orders/types";
+import { PendingLabel, BatchLoading } from "@/components/shared/loading";
 import { ActionDialog } from "@/components/shared/action-dialog";
 import {
   StatusBadge,
@@ -209,7 +210,13 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
   function errorText(key: string) {
     return fields[key]?.join(" ");
   }
-  if (loading) return <p role="status">Loading preparation…</p>;
+  if (loading) return <BatchLoading kind="preparation" />;
+  if (error && !recipes.length)
+    return (
+      <p className="alert error" role="alert">
+        {error} Reload this page to try again.
+      </p>
+    );
   return (
     <>
       <div className="page-heading">
@@ -264,6 +271,7 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
       <form
         className="preparation-form form-stack"
         noValidate
+        aria-busy={busy}
         onSubmit={(e) => {
           e.preventDefault();
           void save();
@@ -426,8 +434,16 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
         </div>
         <div className="actions">
           {editable && (
-            <button className="button primary" disabled={busy || !dirty}>
-              {busy ? "Saving…" : order ? "Save preparation" : "Create Order"}
+            <button
+              className="button primary"
+              disabled={busy || !dirty}
+              aria-busy={busy && !action}
+            >
+              <PendingLabel
+                pending={busy && !action}
+                label={order ? "Save preparation" : "Create Order"}
+                pendingLabel={order ? "Saving…" : "Creating…"}
+              />
             </button>
           )}
           {order && editable && (
@@ -442,7 +458,13 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
           )}
           <span className="helper" role="status">
             {busy
-              ? "Saving…"
+              ? action === "submit"
+                ? "Submitting…"
+                : action === "recut"
+                  ? "Starting re-cut…"
+                  : order
+                    ? "Saving…"
+                    : "Creating…"
               : notice ||
                 (!order
                   ? "Unsaved preview"
@@ -489,13 +511,14 @@ export function OrderPreparation({ orderId }: { orderId?: string }) {
           <button
             className="button primary"
             disabled={busy}
+            aria-busy={busy}
             onClick={() => void transition()}
           >
-            {busy
-              ? "Submitting…"
-              : action === "recut"
-                ? "Begin Re-cut"
-                : "Confirm submission"}
+            <PendingLabel
+              pending={busy}
+              label={action === "recut" ? "Begin Re-cut" : "Confirm submission"}
+              pendingLabel={action === "recut" ? "Starting…" : "Submitting…"}
+            />
           </button>
         </div>
       </ActionDialog>

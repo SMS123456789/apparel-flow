@@ -67,12 +67,15 @@ Canonical /api/verification is singular. Wrong role or self-verification -> 403;
 | PATCH /api/admin/users/:id/role | A | Target revision/production role; protected self/promotion guards, audit. | 200 |
 | PATCH /api/admin/users/:id/status | A | Target revision/isActive; no self-deactivation; audit. | 200 |
 | GET /api/admin/audit | A | Safe immutable administrative events. | 200 |
+| GET /api/admin/production-audit | A | Read-only aggregate of proven creation/submission/decision/sewing-start records; immutable details. | 200 |
 
 Admin lists accept search (trimmed max 100, literal name/email), role (one of four exact application roles), active (true/false string), limit (1–100, default 20) and cursor (max 512). Audit accepts limit/cursor only. Repeated/unknown parameters fail validation. data.items contains safe records and data.nextCursor is null or an opaque cursor; ordering is createdAt DESC then id DESC. User records include id/email/fullName/role/isActive/revision/createdAt/updatedAt. Audit records include safe actor/target names/IDs, action, beforeState/afterState, requestId and createdAt.
 
 Create fullName is trimmed 1–200, email max 254, temporaryPassword 6–128 before provider policy checks. Role/status revisions are nonnegative safe integer JSON numbers, isActive is a strict boolean and target IDs are UUIDs. All SYSTEM_ADMIN targets are protected from normal role/status changes.
 
 No /api/admin/operations, async 202, invite, password-in-response, normal SYSTEM_ADMIN create/promotion, impersonation, or hard-delete endpoint.
+
+The Production audit extension accepts only limit (1–100, default 20) and an opaque cursor. It orders exact microsecond action time, source and source-record UUID descending. Invalid decoded cursors return 422, repeated parameters 400, unknown filters 422; wrong/inactive role fails before evidence reads. POST/PATCH/DELETE are unsupported (405). Verification decimals remain exact strings. Actor-name provenance is explicit; creation details do not imply current preparation was the original snapshot. No existing production read or mutation endpoint grants SYSTEM_ADMIN access.
 
 ## Zod schema inventory
 

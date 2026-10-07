@@ -10,6 +10,11 @@ import {
   formatCount,
 } from "@/components/shared/data-display";
 import { ChevronRight } from "lucide-react";
+import {
+  PendingLabel,
+  LoadingStatus,
+  TableSkeletonRows,
+} from "@/components/shared/loading";
 export function VerificationQueue({ history = false }: { history?: boolean }) {
   const [result, setResult] = useState<OrderPage | null>(null),
     [error, setError] = useState(""),
@@ -79,8 +84,12 @@ export function VerificationQueue({ history = false }: { history?: boolean }) {
             placeholder="AF-…"
           />
         </div>
-        <button className="button" disabled={busy}>
-          Search
+        <button className="button" disabled={busy} aria-busy={busy}>
+          <PendingLabel
+            pending={busy && Boolean(result)}
+            label="Search"
+            pendingLabel="Applying…"
+          />
         </button>
       </form>
       {error && (
@@ -88,14 +97,21 @@ export function VerificationQueue({ history = false }: { history?: boolean }) {
           {error}
         </p>
       )}
-      <p className="helper" role="status">
-        {busy ? "Loading batches…" : `Times: ${displayTimezone}.`}
-      </p>
+      <LoadingStatus
+        busy={busy}
+        label={
+          result
+            ? "Loading batches; previous results remain visible…"
+            : "Loading batches…"
+        }
+        idle={`Times: ${displayTimezone}.`}
+      />
       <div
         className="table-region"
         role="region"
         aria-label="Verification batches"
         tabIndex={0}
+        aria-busy={busy}
       >
         <table>
           <thead>
@@ -109,6 +125,7 @@ export function VerificationQueue({ history = false }: { history?: boolean }) {
             </tr>
           </thead>
           <tbody>
+            {busy && !result && <TableSkeletonRows columns={6} />}
             {result?.items.map((o) => (
               <tr key={o.id}>
                 <td className="primary-data order-number">{o.orderNo}</td>

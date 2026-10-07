@@ -1061,6 +1061,97 @@ table tbody > tr:hover > td {
 .status-badge {
   white-space: nowrap;
 }
+.pending-label {
+  display: inline-grid;
+  align-items: center;
+}
+.pending-label > span {
+  grid-area: 1 / 1;
+}
+.label-reserve {
+  visibility: hidden;
+}
+.label-reserve::before {
+  content: attr(data-label);
+}
+.pending-reserve {
+  padding-left: 22px;
+}
+.visible-label,
+.loading-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.loading-status {
+  justify-content: flex-start;
+  min-height: 20px;
+  margin: 12px 0;
+}
+.pending-label svg,
+.loading-status svg {
+  flex-shrink: 0;
+}
+.skeleton-bar {
+  display: block;
+  height: 14px;
+  width: 80%;
+  border-radius: 3px;
+  background: var(--af-border);
+}
+.skeleton-bar.short {
+  width: 55%;
+}
+.skeleton-row td {
+  height: 64px;
+}
+.skeleton-title {
+  width: 220px;
+  height: 28px;
+  margin-bottom: 12px;
+}
+.heading-description {
+  width: min(360px, 70vw);
+  margin-top: 12px;
+}
+.skeleton-filters {
+  min-height: 80px;
+}
+.skeleton-filters > span {
+  height: 36px;
+  width: 100%;
+}
+.skeleton-fields {
+  margin-bottom: 32px;
+}
+.skeleton-fields > span {
+  height: 56px;
+  margin: 12px 0;
+}
+.production-audit-table .production-summary {
+  min-width: 160px;
+  max-width: 320px;
+  overflow-wrap: anywhere;
+}
+.production-audit-details {
+  padding: 12px;
+  white-space: normal;
+}
+.audit-batch-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+  margin: 16px 0;
+}
+.audit-batch-facts dt {
+  color: var(--af-text-secondary);
+  font-size: 12px;
+}
+.audit-batch-facts dd {
+  margin: 4px 0 0;
+  font-weight: 600;
+}
 .role-badge {
   overflow-wrap: normal;
 }
@@ -1080,7 +1171,7 @@ table tbody > tr:hover > td {
 .row-action {
   white-space: nowrap;
 }
-@media (max-width: 360px) {
+@media (max-width: 480px) {
   .app-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;

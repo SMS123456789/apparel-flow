@@ -409,13 +409,14 @@ requirements read-only. Do not offer a generic production-status selector.
 Admin pages should feel like system administration. Use tables and compact forms;
 the Users list is the primary landing content. Its primary columns are Name,
 Email, Role, Account status, Created, and Relevant action. Administrative audit
-has its own read-only table. Avoid unnecessary admin analytics.
+has its own read-only table. The explicitly requested Production audit uses a separate read-only table of existing authoritative manufacturing evidence. Avoid unnecessary admin analytics.
 
 Create User follows the existing email/full name/production role/temporary
 password contract. Clear the password after submission completion; never echo it
 in a success panel or store it in browser persistence. Account activity and role
 changes have explicit labels and confirmation where consequential. No production
-navigation, manufacturing commands, impersonation, or force-state controls.
+workspace navigation, manufacturing commands, impersonation, or force-state controls.
+The separate Production audit allows viewing recorded evidence only.
 
 ### Sewing Supervisor
 
@@ -610,3 +611,9 @@ handlers, disabled/read-only attributes and eligibility declarations. No API,
 schema, query, Auth or permission files changed. The private-value and browser
 bundle scan passed. Native tables, filters, selects and dialog behavior remain
 in use because they support the existing factory tasks and accessibility rules.
+
+## Production audit, identity and loading refinement
+
+The production-polish request adds a separate SYSTEM_ADMIN audit table: Time, Order, Actor, Action, Summary, Details. Created uses blue, Submitted indigo, Approved green, Rejected red and Sewing started teal, always with explicit labels and icons. This sewing audit action does not change the existing completed Assembly started treatment or production state machine. Expand evidence beneath its row; retain exact actor IDs and timestamps in secondary native details. Distinguish recorded verifier names from current account names.
+
+App Router and client fetch loading use static skeleton rows/forms matching their eventual layout. Refreshes retain previous rows with an inline status and aria-busy region. Meaningful mutations use their existing pending guards, precise action labels and static loading icons with reserved label width. No shimmer, forced delay, fake data or motion. Loading resolves to content, an empty state or safe actionable error. The restrained AF SVG icon uses the native App Router icon convention; the tab title remains ApparelFlow.

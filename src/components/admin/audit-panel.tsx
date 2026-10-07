@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { LoadingStatus, LoadingTable } from "@/components/shared/loading";
 import { api } from "@/lib/http/client";
 import type { AdminAuditEvent, PageResult } from "@/modules/admin/types";
 import { StatusBadge } from "@/components/shared/semantic-status";
@@ -25,6 +26,9 @@ function auditValue(key: string, value: unknown): string {
 }
 export function AuditPanel() {
   const [page, setPage] = useState<PageResult<AdminAuditEvent> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [retry, setRetry] = useState(0);
+  const [loadedPage, setLoadedPage] = useState(1);
   const [error, setError] = useState("");
   const [cursors, setCursors] = useState<string[]>([]);
   useEffect(() => {
@@ -36,17 +40,25 @@ export function AuditPanel() {
       .then((result) => {
         if (!cancelled) {
           setPage(result);
+          setLoadedPage(cursors.length + 1);
           setError("");
         }
       })
-      .catch(() => {
+      .catch((failure: unknown) => {
         if (!cancelled)
-          setError("Audit could not be loaded. Reload to try again.");
+          setError(
+            failure instanceof Error
+              ? failure.message
+              : "Audit could not be loaded. Try again.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [cursors]);
+  }, [cursors, retry]);
   return (
     <>
       <div className="page-heading">
@@ -57,11 +69,28 @@ export function AuditPanel() {
       </div>
       {error && (
         <p className="alert error" role="alert">
-          {error}
+          {error} {page && "Previous results remain visible."}
+          <button
+            className="button"
+            disabled={loading}
+            onClick={() => {
+              setLoading(true);
+              setRetry((old) => old + 1);
+            }}
+          >
+            Try again
+          </button>
         </p>
       )}
-      {!page && !error ? (
-        <p role="status">Loading audit…</p>
+      <LoadingStatus
+        busy={loading && Boolean(page)}
+        label="Loading audit; previous results remain visible…"
+      />
+      {!page && loading ? (
+        <LoadingTable
+          label="Loading audit…"
+          columns={["Time", "Actor", "User", "Action", "Details"]}
+        />
       ) : (
         page && (
           <>
@@ -69,6 +98,7 @@ export function AuditPanel() {
               className="table-region"
               role="region"
               aria-label="Administrative events"
+              aria-busy={loading}
               tabIndex={0}
             >
               <table>
@@ -172,22 +202,22 @@ export function AuditPanel() {
             <div className="pagination">
               <button
                 className="button secondary"
-                disabled={!cursors.length}
+                disabled={loading || !cursors.length}
                 onClick={() => {
-                  setPage(null);
+                  setLoading(true);
                   setCursors((old) => old.slice(0, -1));
                 }}
               >
                 Previous
               </button>
-              <span>Page {cursors.length + 1}</span>
+              <span>Page {loadedPage}</span>
               <button
                 className="button secondary"
-                disabled={!page.nextCursor}
+                disabled={loading || Boolean(error) || !page.nextCursor}
                 onClick={() => {
                   if (page.nextCursor) {
                     const next = page.nextCursor;
-                    setPage(null);
+                    setLoading(true);
                     setCursors((old) => [...old, next]);
                   }
                 }}

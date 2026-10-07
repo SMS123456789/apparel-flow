@@ -9,7 +9,7 @@
 | CUTTING_SUPERVISOR | cutting_supervisor | Prepare/submit/re-cut orders and track cutting progress. |
 | CUTTING_VERIFIER | cutting_verifier | Physical counts, approve/reject, sign-off. |
 | SEWING_SUPERVISOR | sewing_supervisor | Verified-only view and Start Sewing. |
-| SYSTEM_ADMIN | Not present | User lifecycle, production-role assignment, administrative audit. |
+| SYSTEM_ADMIN | Not present | User lifecycle, production-role assignment, administrative audit, read-only production audit. |
 
 **DESIGN DECISION (approved by user, UD-009/UD-010/UD-025):** One factory, no tenancy, exactly one current role per user in public.profiles. Production access is role-based across factory records; creator-owned lists or tenant/plant membership tables are not required. Admin is not a super-role. Supabase auth.users owns authentication; profiles owns application role/activity/name. Editable Auth metadata and client JSON cannot grant authority.
 
@@ -34,16 +34,19 @@ A = assessment; E = approved extension; D = approved design decision. Deny anyth
 | Approve/reject | Deny | Allow except own-created orders | Deny | Deny | A/D/E |
 | Edit recipes | Deny | Deny | Deny | Deny | A/D, UD-008 |
 | Sewing Queue | Deny | Deny | VERIFIED only | Deny | A/E |
-| Read immutable verification evidence | Factory cutting summary | Factory verification history | VERIFIED approved evidence only | Deny | D, UD-009 |
+| Read immutable verification evidence through production APIs | Factory cutting summary | Factory verification history | VERIFIED approved evidence only | Deny | D, UD-009 |
 | Start Sewing | Deny | Deny | VERIFIED and not already started | Deny | A/D, UD-007 |
 | Create/view production users | Deny | Deny | Deny | Allow: email/name/role/temporary password | E/D, UD-022 |
 | Activate/deactivate users | Deny | Deny | Deny | Allow; cannot deactivate itself | E/D, UD-011 |
 | Assign/change production role | Deny | Deny | Deny | Allow; no self-production assignment or self-demotion | E/D, UD-010/UD-011 |
 | Create/promote SYSTEM_ADMIN via normal UI/API | Deny | Deny | Deny | Deny | D, UD-011 |
 | Administrative audit | Deny | Deny | Deny | Allow | E |
+| Read-only production audit projection | Deny | Deny | Deny | Allow: recorded creation/submission/decision/sewing evidence only | E, production-polish request |
 | Direct status assignment | Deny | Deny | Deny | Deny | Approved invariant |
 | Rewrite finalized evidence/hard-delete established records | Deny | Deny | Deny | Deny | D, UD-006/UD-014 |
 | Impersonate/inject sewing entry | Deny | Deny | Deny | Deny | Approved invariant |
+
+The production-polish request explicitly adds a separate admin-only, read-only audit projection. Its controller and service independently require the current active SYSTEM_ADMIN; its SELECT-only server repository rechecks that profile before reading existing authoritative records. Existing production endpoints, RLS, grants, command guards and role inheritance remain unchanged. This projection grants no manufacturing action or production workspace access.
 
 The first SYSTEM_ADMIN is privately bootstrapped through Supabase by an infrastructure operator using scripts/bootstrap-users.ts and ignored configuration, as explicitly authorized in G04. It is not created through public signup or the normal admin panel. UI restrictions above are enforced by server APIs as well.
 

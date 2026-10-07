@@ -14,7 +14,7 @@ Login/demo, four protected role shells, /admin users and /admin/audit follow [15
 | Cutting Supervisor | Cutting dashboard; Orders; Create Order; Prepared Detail; Rejected/Re-cut Detail | Create, prepare, submit, approved re-cut actions. No counts/sign-off/sewing navigation. |
 | Cutting Verifier | Verification Queue; Verification Terminal; approved history scope | Count, save, approve/reject. No create/recipe-edit/sewing navigation. |
 | Sewing Supervisor | Sewing Queue; Verified Batch Detail | Inspect immutable evidence; Start Sewing. No unverified searches/routes. |
-| SYSTEM_ADMIN | Users; Create User; Administrative Audit | Create with email/full name/production role/temporary password; role/activity management; no production navigation. |
+| SYSTEM_ADMIN | Users; Create User; Administrative Audit; read-only Production Audit | Account management; separately inspect recorded production evidence; no manufacturing actions or production workspace navigation. |
 
 **ASSESSMENT REQUIREMENT (5, p.2):** Visible Role Switcher / Demo Credential Panel with real persona authentication. **DESIGN DECISION (approved by user, UD-015):** Three distinct real email/password accounts are available for evaluator sign-in. The explicit G04 request permits server-triggered authentication; the implemented panel shows three persona buttons while credentials remain server-side. Selection authenticates a different account and never edits role metadata. Public signup is disabled. Infrastructure/admin credentials stay private; flush user-scoped view/cache state on account change.
 

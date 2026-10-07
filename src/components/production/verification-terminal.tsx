@@ -8,6 +8,7 @@ import {
   componentResult,
 } from "@/modules/verification/rules";
 import { rejectSchema } from "@/modules/verification/schemas";
+import { PendingLabel, BatchLoading } from "@/components/shared/loading";
 import { ActionDialog } from "@/components/shared/action-dialog";
 import { ComponentStatus } from "./component-status";
 import { DecisionHistory } from "./decision-history";
@@ -39,6 +40,9 @@ export function VerificationTerminal({
   const [action, setAction] = useState<"approve" | "reject" | null>(null),
     [reason, setReason] = useState(""),
     [reasonError, setReasonError] = useState("");
+  const [pendingOperation, setPendingOperation] = useState<
+    "save" | "reload" | "approve" | "reject" | null
+  >(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const reasonRef = useRef<HTMLTextAreaElement>(null);
   const [blockedComponents, setBlockedComponents] = useState<string[]>([]);
@@ -169,6 +173,7 @@ export function VerificationTerminal({
   }
   async function reloadEvidence() {
     setBusy(true);
+    setPendingOperation("reload");
     setError("");
     try {
       const data = await api<OrderDetail>(`/api/verification/${orderId}`);
@@ -182,11 +187,13 @@ export function VerificationTerminal({
       failure(e);
     } finally {
       setBusy(false);
+      setPendingOperation(null);
     }
   }
   async function save() {
     if (!order || !attempt || invalid || own || stale) return;
     setBusy(true);
+    setPendingOperation("save");
     setError("");
     setNotice("");
     const items = order.components.flatMap((c) => {
@@ -216,6 +223,7 @@ export function VerificationTerminal({
       failure(e);
     } finally {
       setBusy(false);
+      setPendingOperation(null);
     }
   }
   async function decide() {
@@ -239,6 +247,7 @@ export function VerificationTerminal({
       trimmed = check.data.reason;
     }
     setBusy(true);
+    setPendingOperation(action);
     setError("");
     try {
       const data = await api<OrderDetail>(
@@ -264,6 +273,7 @@ export function VerificationTerminal({
       failure(e);
     } finally {
       setBusy(false);
+      setPendingOperation(null);
     }
   }
   function cancel() {
@@ -277,7 +287,7 @@ export function VerificationTerminal({
     setAction(null);
     setError("");
   }
-  if (loading) return <p role="status">Loading verification…</p>;
+  if (loading) return <BatchLoading kind="verification" />;
   if (!order)
     return (
       <p role="alert" className="alert error">
@@ -338,6 +348,7 @@ export function VerificationTerminal({
             className="table-region"
             role="region"
             aria-label="Component counts"
+            aria-busy={busy}
             tabIndex={0}
           >
             <table className="count-table">
@@ -451,21 +462,41 @@ export function VerificationTerminal({
               type="button"
               className="button primary"
               disabled={busy || own || stale || invalid || !dirty}
+              aria-busy={pendingOperation === "save"}
               onClick={() => void save()}
             >
-              {busy ? "Saving…" : "Save Counts"}
+              <PendingLabel
+                pending={pendingOperation === "save"}
+                label="Save Counts"
+                pendingLabel="Saving…"
+              />
             </button>
             <span className="helper" role="status">
               {notice ||
-                (busy ? "Saving…" : dirty ? "Unsaved counts" : "Saved counts")}
+                (busy
+                  ? pendingOperation === "approve"
+                    ? "Approving…"
+                    : pendingOperation === "reject"
+                      ? "Rejecting…"
+                      : pendingOperation === "reload"
+                        ? "Reloading saved evidence…"
+                        : "Saving…"
+                  : dirty
+                    ? "Unsaved counts"
+                    : "Saved counts")}
             </span>
             {(stale || error) && (
               <button
                 className="button"
                 disabled={busy}
+                aria-busy={pendingOperation === "reload"}
                 onClick={() => void reloadEvidence()}
               >
-                Reload saved evidence
+                <PendingLabel
+                  pending={pendingOperation === "reload"}
+                  label="Reload saved evidence"
+                  pendingLabel="Reloading…"
+                />
               </button>
             )}
           </div>
@@ -564,13 +595,16 @@ export function VerificationTerminal({
           <button
             className={`button ${action === "reject" ? "destructive" : "primary approve"}`}
             disabled={busy || (action === "approve" && !canApprove)}
+            aria-busy={busy}
             onClick={() => void decide()}
           >
-            {busy
-              ? "Recording decision…"
-              : action === "reject"
-                ? "Confirm rejection"
-                : "Confirm approval"}
+            <PendingLabel
+              pending={busy}
+              label={
+                action === "reject" ? "Confirm rejection" : "Confirm approval"
+              }
+              pendingLabel={action === "reject" ? "Rejecting…" : "Approving…"}
+            />
           </button>
         </div>
       </ActionDialog>

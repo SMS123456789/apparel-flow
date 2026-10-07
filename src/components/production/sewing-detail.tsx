@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { api, ApiClientError } from "@/lib/http/client";
 import type { SewingDetail as Batch } from "@/modules/sewing/types";
+import { PendingLabel, BatchLoading } from "@/components/shared/loading";
 import { ActionDialog } from "@/components/shared/action-dialog";
 import { StatusBadge } from "@/components/shared/semantic-status";
 import {
@@ -73,7 +74,7 @@ export function SewingDetail({ orderId }: { orderId: string }) {
       setBusy(false);
     }
   }
-  if (loading) return <p role="status">Loading verified batch…</p>;
+  if (loading) return <BatchLoading kind="sewing" />;
   if (!batch)
     return (
       <p className="alert error" role="alert">
@@ -155,9 +156,14 @@ export function SewingDetail({ orderId }: { orderId: string }) {
           <button
             className="button"
             disabled={busy}
+            aria-busy={busy && !confirm}
             onClick={() => void reload()}
           >
-            Reload batch
+            <PendingLabel
+              pending={busy && !confirm}
+              label="Reload batch"
+              pendingLabel="Reloading…"
+            />
           </button>
         )}
       </section>
@@ -192,9 +198,14 @@ export function SewingDetail({ orderId }: { orderId: string }) {
           <button
             className="button primary"
             disabled={busy || stale}
+            aria-busy={busy}
             onClick={() => void start()}
           >
-            {busy ? "Recording start…" : "Confirm assembly start"}
+            <PendingLabel
+              pending={busy}
+              label="Confirm assembly start"
+              pendingLabel="Starting…"
+            />
           </button>
         </div>
       </ActionDialog>

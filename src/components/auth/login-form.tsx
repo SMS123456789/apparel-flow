@@ -6,6 +6,7 @@ import {
   type DemoPersona,
 } from "@/modules/identity/types";
 import { api, ApiClientError } from "@/lib/http/client";
+import { PendingLabel, LoadingStatus } from "@/components/shared/loading";
 import { RoleIcon } from "@/components/shared/semantic-status";
 interface LoginResult {
   user: AuthenticatedUser;
@@ -113,10 +114,16 @@ export function LoginForm({
           className="button primary"
           type="submit"
           disabled={Boolean(busy)}
+          aria-busy={busy === "Signing in…"}
         >
-          {busy ?? "Sign in"}
+          <PendingLabel
+            pending={busy === "Signing in…"}
+            label="Sign in"
+            pendingLabel="Signing in…"
+          />
         </button>
       </form>
+      <LoadingStatus busy={Boolean(busy)} label={busy ?? ""} />
       <section className="demo-panel" aria-labelledby="demo-title">
         <h2 id="demo-title">Demo Accounts</h2>
         <p>Choose a factory account to sign in with a real session.</p>
@@ -127,6 +134,7 @@ export function LoginForm({
               type="button"
               className="button secondary"
               data-role={persona.role}
+              aria-busy={busy === `Signing in as ${persona.label}…`}
               disabled={Boolean(busy) || !enabledPersonas.includes(persona.id)}
               onClick={() =>
                 void signIn(
@@ -137,7 +145,11 @@ export function LoginForm({
               }
             >
               <RoleIcon role={persona.role} size={18} />
-              {persona.label}
+              <PendingLabel
+                pending={busy === `Signing in as ${persona.label}…`}
+                label={persona.label}
+                pendingLabel="Signing in…"
+              />
             </button>
           ))}
         </div>

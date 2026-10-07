@@ -18,6 +18,11 @@ import {
   HumanDateTime,
   displayTimezone,
 } from "@/components/shared/data-display";
+import {
+  PendingLabel,
+  LoadingStatus,
+  LoadingTable,
+} from "@/components/shared/loading";
 import { AdminDialog } from "./admin-dialog";
 type Action = { kind: "create" } | { kind: "role" | "status"; user: AdminUser };
 export function UsersPanel() {
@@ -56,7 +61,6 @@ export function UsersPanel() {
       })
       .catch((failure: unknown) => {
         if (current !== generation.current) return;
-        setPage(null);
         setError(
           failure instanceof Error
             ? failure.message
@@ -246,108 +250,132 @@ export function UsersPanel() {
             <option value="false">Inactive</option>
           </select>
         </div>
-        <button className="button secondary" type="submit" disabled={loading}>
-          Search
+        <button
+          className="button secondary"
+          type="submit"
+          disabled={loading}
+          aria-busy={loading}
+        >
+          <PendingLabel
+            pending={loading && Boolean(page)}
+            label="Search"
+            pendingLabel="Applying…"
+          />
         </button>
       </form>
-      {loading ? (
-        <p role="status">Loading users…</p>
-      ) : (
-        page && (
-          <>
-            <div
-              className="table-region"
-              role="region"
-              aria-label="User accounts"
-              tabIndex={0}
-            >
-              <table>
-                <caption>Application accounts · {displayTimezone}</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Created</th>
-                    <th scope="col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {page.items.map((user) => (
-                    <tr key={user.id}>
-                      <td className="primary-data">{user.fullName}</td>
-                      <td>{user.email}</td>
-                      <td>
-                        <RoleBadge role={user.role} />
-                      </td>
-                      <td>
-                        <StatusBadge
-                          status={user.isActive ? "ACTIVE" : "INACTIVE"}
-                        />
-                      </td>
-                      <td>
-                        <HumanDateTime value={user.createdAt} stacked />
-                      </td>
-                      <td>
-                        {user.role === "SYSTEM_ADMIN" ? (
-                          <StatusBadge status="PROTECTED" />
-                        ) : (
-                          <div className="actions">
-                            <button
-                              className="button secondary"
-                              aria-label={`Change role for ${user.fullName}`}
-                              onClick={() => open({ kind: "role", user })}
-                            >
-                              Change Role
-                            </button>
-                            <button
-                              className={`button secondary ${user.isActive ? "reject-entry" : ""}`}
-                              aria-label={`${user.isActive ? "Deactivate" : "Activate"} ${user.fullName}`}
-                              onClick={() => open({ kind: "status", user })}
-                            >
-                              {user.isActive ? "Deactivate" : "Activate"}
-                            </button>
-                          </div>
-                        )}
-                      </td>
+      <LoadingStatus
+        busy={loading && Boolean(page)}
+        label="Loading users; previous results remain visible…"
+      />
+      {!page
+        ? loading && (
+            <LoadingTable
+              label="Loading users…"
+              columns={[
+                "Name",
+                "Email",
+                "Role",
+                "Status",
+                "Created",
+                "Actions",
+              ]}
+            />
+          )
+        : page && (
+            <>
+              <div
+                className="table-region"
+                role="region"
+                aria-label="User accounts"
+                aria-busy={loading}
+                tabIndex={0}
+              >
+                <table>
+                  <caption>Application accounts · {displayTimezone}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Name</th>
+                      <th scope="col">Email</th>
+                      <th scope="col">Role</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Created</th>
+                      <th scope="col">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {page.items.length === 0 && (
-              <p className="empty-state">No users match these filters.</p>
-            )}
-            <div className="pagination">
-              <button
-                className="button secondary"
-                disabled={!cursors.length}
-                onClick={() => {
-                  setLoading(true);
-                  setCursors((old) => old.slice(0, -1));
-                }}
-              >
-                Previous
-              </button>
-              <span>Page {cursors.length + 1}</span>
-              <button
-                className="button secondary"
-                disabled={!page.nextCursor}
-                onClick={() => {
-                  if (page.nextCursor) {
-                    const next = page.nextCursor;
+                  </thead>
+                  <tbody>
+                    {page.items.map((user) => (
+                      <tr key={user.id}>
+                        <td className="primary-data">{user.fullName}</td>
+                        <td>{user.email}</td>
+                        <td>
+                          <RoleBadge role={user.role} />
+                        </td>
+                        <td>
+                          <StatusBadge
+                            status={user.isActive ? "ACTIVE" : "INACTIVE"}
+                          />
+                        </td>
+                        <td>
+                          <HumanDateTime value={user.createdAt} stacked />
+                        </td>
+                        <td>
+                          {user.role === "SYSTEM_ADMIN" ? (
+                            <StatusBadge status="PROTECTED" />
+                          ) : (
+                            <div className="actions">
+                              <button
+                                className="button secondary"
+                                aria-label={`Change role for ${user.fullName}`}
+                                onClick={() => open({ kind: "role", user })}
+                              >
+                                Change Role
+                              </button>
+                              <button
+                                className={`button secondary ${user.isActive ? "reject-entry" : ""}`}
+                                aria-label={`${user.isActive ? "Deactivate" : "Activate"} ${user.fullName}`}
+                                onClick={() => open({ kind: "status", user })}
+                              >
+                                {user.isActive ? "Deactivate" : "Activate"}
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {page.items.length === 0 && (
+                <p className="empty-state">No users match these filters.</p>
+              )}
+              <div className="pagination">
+                <button
+                  className="button secondary"
+                  disabled={loading || !cursors.length}
+                  onClick={() => {
                     setLoading(true);
-                    setCursors((old) => [...old, next]);
-                  }
-                }}
-              >
-                Next
-              </button>
-            </div>
-          </>
-        )
-      )}
+                    setCursors((old) => old.slice(0, -1));
+                  }}
+                >
+                  Previous
+                </button>
+                <span>Page {cursors.length + 1}</span>
+                <button
+                  className="button secondary"
+                  disabled={loading || !page.nextCursor}
+                  onClick={() => {
+                    if (page.nextCursor) {
+                      const next = page.nextCursor;
+                      setLoading(true);
+                      setCursors((old) => [...old, next]);
+                    }
+                  }}
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          )}
       <AdminDialog
         open={Boolean(action)}
         title={discarding ? "Discard changes?" : title}
@@ -499,16 +527,29 @@ export function UsersPanel() {
               type="submit"
               className={`button ${action?.kind === "status" && action.user.isActive ? "destructive" : "primary"}`}
               disabled={saving || stale}
+              aria-busy={saving}
             >
-              {saving
-                ? "Saving…"
-                : action?.kind === "create"
-                  ? "Create User"
-                  : action?.kind === "role"
-                    ? "Save Role"
-                    : action?.user.isActive
-                      ? "Deactivate"
-                      : "Activate"}
+              <PendingLabel
+                pending={saving}
+                label={
+                  action?.kind === "create"
+                    ? "Create User"
+                    : action?.kind === "role"
+                      ? "Save Role"
+                      : action?.user.isActive
+                        ? "Deactivate"
+                        : "Activate"
+                }
+                pendingLabel={
+                  action?.kind === "create"
+                    ? "Creating user…"
+                    : action?.kind === "role"
+                      ? "Updating…"
+                      : action?.user.isActive
+                        ? "Deactivating…"
+                        : "Activating…"
+                }
+              />
             </button>
           </div>
         </form>

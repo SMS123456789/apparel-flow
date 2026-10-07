@@ -40,7 +40,7 @@ The two forward identity migrations add one own-active profiles SELECT policy an
 
 Elevated service context bypasses RLS, so independent backend checks are essential. Grants and RLS both need review; policies do not revoke existing grants. Secure views as well as tables. [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
-Keep server command/Auth-admin clients isolated in server-only adapters; secret possession is not application authority. Do not use elevated reads to expose production data to SYSTEM_ADMIN or broaden sewing scope.
+Keep server command/Auth-admin clients isolated in server-only adapters; secret possession is not application authority. The explicitly requested production audit is the sole additional SYSTEM_ADMIN read projection: controller/service exact-role guards and a SELECT-only repository with a fresh active-admin check. Existing production API and database read permissions are unchanged; never broaden sewing scope.
 
 ## Factory-wide role policies
 
@@ -113,7 +113,7 @@ The approved read-policy table is now implemented. Active Verifier scope include
 submitted history; active Sewing scope fixes VERIFIED and limits all attempt,
 count and evidence children to the current approved attempt/log. Sewing cannot
 read reference recipes/components or prior rejected evidence. Views use caller
-RLS. Admin remains isolated from all production data and commands.
+RLS. Admin remains isolated from production workspaces, ordinary production APIs and all manufacturing commands. The subsequently requested read-only audit projection is described above.
 
 Only server repositories call eight named service-role production gateways;
 private commands recheck a locked active actor and the specific permitted role,

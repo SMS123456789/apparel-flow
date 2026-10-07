@@ -476,3 +476,39 @@ the seven configured private values and privileged-key patterns; none were
 found, no private environment file was in history, and no Actions runs existed.
 The repository is now PUBLIC. This publishes source history only; it does not
 deploy or configure the website. G08 proceeds through its documentation PR merge.
+
+## Production audit / loading refinement and final live assessment
+
+The user explicitly requested a separate SYSTEM_ADMIN read-only Production Audit,
+small App Router AF favicon, matching static skeletons and precise accessible
+pending feedback on a new branch. This authorizes an additive audit read
+projection; existing manufacturing APIs, SQL/RLS, migrations and commands retain
+their role boundaries. No new event store, workflow state, dependency or schema
+migration is introduced. Creation/submission/decision/start records come from
+existing authoritative tables, with current account names clearly distinguished
+from immutable verifier-name snapshots. Exact PostgreSQL microseconds are kept
+in merged-source keyset pagination.
+
+A real browser test showed that the existing sewing view requires a sewing JWT
+and returns no records for an admin service-context read. The projection instead
+reads the existing VERIFIED cutting-order start fields and validates the linked
+approved attempt/log. The sewing view and its isolation policy are unchanged.
+New tests cover full evidence, pagination, denial of other roles, static loading,
+refresh/error recovery and width-stable pending labels. All original tests remain.
+
+The user subsequently supplied https://apparel-flow.vercel.app/ as the existing
+production URL and explicitly authorized controlled smoke verification while
+prohibiting replacement deployment. This supersedes the historical G08 statement
+that a public URL still needs to be created. The final assessment also explicitly
+requires the three actual evaluator credential pairs in README. Only those pairs
+are published in a marked section; private admin/infrastructure credentials stay
+excluded. The private-value scan retains checks for those values throughout
+source and browser/server bundles, with that exact README-only evaluator exception.
+
+[17 Final assessment verification](17_FINAL_ASSESSMENT_VERIFICATION.md) records
+227 Vitest tests, 29 browser passes plus the existing skip, SQL/race checks,
+read-only cloud confirmation and the live controlled order. Available live UI
+screens pass measured contrast/reflow review. The existing release lacks this
+branch's Production Audit, favicon and loading refinement; overall sign-off is
+withheld until those deployed-version checks can pass. No deployment/config/DNS
+change occurred and no valid Git history was rewritten.

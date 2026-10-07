@@ -1,6 +1,6 @@
 # 10 - Administrative panel specification
 
-**APPROVED EXTENSION:** SYSTEM_ADMIN views/creates production users, changes production roles, activates/deactivates, reviews administrative audit. No manufacturing, impersonation, force-state, or sewing injection.
+**APPROVED EXTENSION:** SYSTEM_ADMIN views/creates production users, changes production roles, activates/deactivates, reviews administrative audit and a separate read-only production audit. No manufacturing, impersonation, force-state, or sewing injection.
 
 **DESIGN DECISION (approved UD-011/UD-022):** First admin privately bootstrapped through Supabase by scripts/bootstrap-users.ts using operator-only ignored configuration, explicitly authorized in G04. Normal UI/API cannot create/promote another SYSTEM_ADMIN, self-deactivate/self-demote, or self-assign production. User creation is synchronous Auth create -> profile create, with cleanup attempt on profile failure; no invitation/async provisioning system is required initially.
 
@@ -19,8 +19,9 @@ Role/activity updates lock/recheck the active admin and target, reject all SYSTE
 | Users | Name/email/current role/active state/timestamps; safe search/filter/pagination. | Create User; production-role change; activate/deactivate. |
 | Create User | Email, full name, production role, temporary password. | Submit once; show validation/success/sanitized failure. |
 | Administrative audit | Actor/target/action/safe before-after role/activity/time/outcome/request ID. | Read-only cursor pagination and safe before/after details. |
+| Production audit | Time/order/recorded actor/action/summary; existing creation, submission, decision and sewing-start records. | Read-only cursor pagination and expandable immutable evidence; no manufacturing controls. |
 
-No order/count/recipe/sewing/override/impersonation navigation. Browser never invokes Supabase Admin API or stores elevated secrets.
+No production workspace, order/count/recipe/sewing mutation, override or impersonation navigation. The explicitly requested Production audit is a separate read-only destination. Browser never invokes Supabase Admin API or stores elevated secrets.
 
 ## Approved creation flow
 
@@ -66,3 +67,9 @@ Audit stores server actor/time, target, action, safe old/new role/activity and o
 ## Acceptance
 
 Non-admin -> 403 for admin reads/mutations. Admin -> 403 for all production commands. Self-deactivation/demotion/production-role assignment and SYSTEM_ADMIN creation/promotion through normal API fail. Auth creation failure leaves no new profile; profile failure attempts new-Auth cleanup and returns error; cleanup failure grants no application access. Successful creation is synchronous 201 with safe user data. Admin remains secondary to core assessment work.
+
+## Production audit refinement
+
+`GET /api/admin/production-audit` uses the existing Route → Controller → Service → Repository layering and private, no-store responses. It aggregates immutable creator/time fields from cutting orders, submitted actor/time from verification attempts, recorded decisions from verification_evidence plus verification_log_items, and starts from VERIFIED cutting_orders with a matching APPROVED current attempt and log. The sewing_batches view retains its sewing-role JWT predicate unchanged. No table, migration, event store, RPC or write capability is added. Each source is bounded to limit + 1; merged pagination orders exact microsecond time, source and record ID descending. Details are hydrated only for the returned page.
+
+Decision names come from the immutable verifier name snapshot. Other names are explicitly current account names looked up by the recorded actor ID, with a safe missing-name fallback. Current order preparation is never presented as a creation snapshot. No event is inferred from updated_at; edits, recuts and intermediate count saves are not invented. Sewing starts include approved sign-off evidence and recorded start attribution. Technical IDs and exact decimals remain available in expandable details.

@@ -10,6 +10,11 @@ import {
   formatCount,
 } from "@/components/shared/data-display";
 import { ChevronRight } from "lucide-react";
+import {
+  PendingLabel,
+  LoadingStatus,
+  TableSkeletonRows,
+} from "@/components/shared/loading";
 export function OrderList() {
   const [result, setResult] = useState<OrderPage | null>(null);
   const [error, setError] = useState("");
@@ -91,8 +96,12 @@ export function OrderList() {
             ))}
           </select>
         </div>
-        <button className="button" disabled={busy}>
-          Apply filters
+        <button className="button" disabled={busy} aria-busy={busy}>
+          <PendingLabel
+            pending={busy && Boolean(result)}
+            label="Apply filters"
+            pendingLabel="Applying…"
+          />
         </button>
       </form>
       {error && (
@@ -100,14 +109,21 @@ export function OrderList() {
           {error}
         </p>
       )}
-      <p className="helper" role="status">
-        {busy ? "Loading orders…" : `Times: ${displayTimezone}.`}
-      </p>
+      <LoadingStatus
+        busy={busy}
+        label={
+          result
+            ? "Loading orders; previous results remain visible…"
+            : "Loading orders…"
+        }
+        idle={`Times: ${displayTimezone}.`}
+      />
       <div
         className="table-region"
         role="region"
         aria-label="Cutting orders"
         tabIndex={0}
+        aria-busy={busy}
       >
         <table>
           <caption>Factory cutting orders</caption>
@@ -122,6 +138,7 @@ export function OrderList() {
             </tr>
           </thead>
           <tbody>
+            {busy && !result && <TableSkeletonRows columns={6} />}
             {result?.items.map((order) => (
               <tr key={order.id}>
                 <td className="primary-data order-number">{order.orderNo}</td>

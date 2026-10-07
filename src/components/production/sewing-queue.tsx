@@ -11,6 +11,11 @@ import {
   formatCount,
 } from "@/components/shared/data-display";
 import { ChevronRight } from "lucide-react";
+import {
+  PendingLabel,
+  LoadingStatus,
+  TableSkeletonRows,
+} from "@/components/shared/loading";
 export function SewingQueue() {
   const [result, setResult] = useState<SewingPage | null>(null),
     [error, setError] = useState(""),
@@ -70,8 +75,12 @@ export function SewingQueue() {
             placeholder="AF-…"
           />
         </div>
-        <button className="button" disabled={busy}>
-          Search
+        <button className="button" disabled={busy} aria-busy={busy}>
+          <PendingLabel
+            pending={busy && Boolean(result)}
+            label="Search"
+            pendingLabel="Applying…"
+          />
         </button>
       </form>
       {error && (
@@ -79,14 +88,21 @@ export function SewingQueue() {
           {error}
         </p>
       )}
-      <p className="helper" role="status">
-        {busy ? "Loading batches…" : `Times: ${displayTimezone}.`}
-      </p>
+      <LoadingStatus
+        busy={busy}
+        label={
+          result
+            ? "Loading batches; previous results remain visible…"
+            : "Loading batches…"
+        }
+        idle={`Times: ${displayTimezone}.`}
+      />
       <div
         className="table-region"
         role="region"
         aria-label="Verified sewing batches"
         tabIndex={0}
+        aria-busy={busy}
       >
         <table>
           <thead>
@@ -101,6 +117,7 @@ export function SewingQueue() {
             </tr>
           </thead>
           <tbody>
+            {busy && !result && <TableSkeletonRows columns={7} />}
             {result?.items.map((o) => (
               <tr key={o.id}>
                 <td className="primary-data order-number">{o.orderNo}</td>

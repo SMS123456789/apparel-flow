@@ -15,9 +15,15 @@ const privateNames = [
   "DEMO_CUTTING_VERIFIER_PASSWORD",
   "DEMO_SEWING_SUPERVISOR_PASSWORD",
 ];
-const privateValues = privateNames
-  .map((name) => process.env[name])
-  .filter((value): value is string => Boolean(value && value.length >= 6));
+const publicEvaluatorNames = new Set([
+  "DEMO_CUTTING_SUPERVISOR_PASSWORD",
+  "DEMO_CUTTING_VERIFIER_PASSWORD",
+  "DEMO_SEWING_SUPERVISOR_PASSWORD",
+]);
+const privateValues = privateNames.flatMap((name) => {
+  const value = process.env[name];
+  return value && value.length >= 6 ? [{ name, value }] : [];
+});
 function javascriptFiles(path: string): string[] {
   return readdirSync(path, { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory()
@@ -38,7 +44,24 @@ try {
   const generated = javascriptFiles(".next");
   for (const file of new Set([...files, ...generated])) {
     const text = readFileSync(file, "utf8");
-    if (privateValues.some((value) => text.includes(value)))
+    // The final assessment request explicitly authorizes the three evaluator
+    // passwords in this marked README section only. Admin/infrastructure values
+    // remain forbidden everywhere; demo passwords remain forbidden in bundles.
+    const withoutEvaluatorSection =
+      file === "README.md"
+        ? text.replace(
+            /<!-- evaluator-credentials:start -->[\s\S]*?<!-- evaluator-credentials:end -->/,
+            "",
+          )
+        : text;
+    if (
+      privateValues.some(({ name, value }) =>
+        (publicEvaluatorNames.has(name)
+          ? withoutEvaluatorSection
+          : text
+        ).includes(value),
+      )
+    )
       throw new Error("Credential content found");
   }
   const browser = javascriptFiles(".next/static");

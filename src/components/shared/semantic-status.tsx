@@ -37,6 +37,9 @@ const states = {
     icon: LockKeyhole,
   },
   USER_CREATED: { label: "User created", tone: "blue", icon: Plus },
+  ORDER_CREATED: { label: "Created", tone: "blue", icon: Plus },
+  SUBMITTED: { label: "Submitted", tone: "indigo", icon: Clock3 },
+  SEWING_STARTED: { label: "Sewing started", tone: "teal", icon: Layers },
   USER_ROLE_CHANGED: {
     label: "Role changed",
     tone: "indigo",

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { rolePaths, roleLabels, type AppRole } from "@/modules/identity/types";
-import { Users, History } from "lucide-react";
+import { Users, History, ClipboardList } from "lucide-react";
 import { roleIcons } from "@/components/shared/semantic-status";
 export function ShellNavigation({ role }: { role: AppRole }) {
   const path = usePathname();
@@ -14,6 +14,11 @@ export function ShellNavigation({ role }: { role: AppRole }) {
             href: "/admin/audit",
             label: "Administrative audit",
             icon: History,
+          },
+          {
+            href: "/admin/production-audit",
+            label: "Production audit",
+            icon: ClipboardList,
           },
         ]
       : [

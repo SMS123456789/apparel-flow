@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { PendingLabel } from "@/components/shared/loading";
 import { api } from "@/lib/http/client";
 export function SignOut() {
   const [busy, setBusy] = useState(false);
@@ -11,8 +12,12 @@ export function SignOut() {
     try {
       await api("/api/auth/logout", { method: "POST" });
       window.location.replace(new URL("/login", window.location.origin).href);
-    } catch {
-      setError("Sign-out failed. Try again.");
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Sign-out failed. Try again.",
+      );
       setBusy(false);
     }
   }
@@ -22,9 +27,14 @@ export function SignOut() {
         type="button"
         className="button secondary"
         disabled={busy}
+        aria-busy={busy}
         onClick={() => void logout()}
       >
-        {busy ? "Signing out…" : "Sign out"}
+        <PendingLabel
+          pending={busy}
+          label="Sign out"
+          pendingLabel="Signing out…"
+        />
       </button>
       {error && (
         <p role="alert" className="field-error">

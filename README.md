@@ -194,9 +194,33 @@ SYSTEM_ADMIN, infrastructure keys and database password private.
 
 <!-- evaluator-credentials:end -->
 
-The private SYSTEM_ADMIN signs in through the ordinary form and uses `/admin`,
-`/admin/audit` and the read-only `/admin/production-audit`; there is no public
-admin demo button.
+## System administrator
+
+The `SYSTEM_ADMIN` account uses real Supabase email/password authentication.
+Open [the production sign-in page](https://apparel-flow.vercel.app/login) or
+`http://localhost:3000/login`, then use the ordinary **Email** and **Password**
+form. Sign out of any production persona first. Successful admin sign-in opens
+`/admin`; there is no admin button in the public Demo Accounts panel.
+
+| Sign-in detail       | Configuration                                                |
+| -------------------- | ------------------------------------------------------------ |
+| Email                | `BOOTSTRAP_ADMIN_EMAIL` in private operator configuration    |
+| Password             | `BOOTSTRAP_ADMIN_PASSWORD` in private operator configuration |
+| Application role     | `SYSTEM_ADMIN`                                               |
+| Initial provisioning | `npm run bootstrap:users`                                    |
+
+The current repository provides these admin destinations:
+
+| Page                 | Path                      | Available actions                                                                                    |
+| -------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Users                | `/admin`                  | Search accounts; create production users; change their production role; activate or deactivate them. |
+| Administrative audit | `/admin/audit`            | Read recorded account actions and their before/after values.                                         |
+| Production audit     | `/admin/production-audit` | Read existing order creation, submission, verification and sewing-start evidence.                    |
+
+Admin access does not grant cutting, counting, approval, rejection or sewing-start
+authority. The normal admin UI/API cannot create another SYSTEM_ADMIN, change a
+SYSTEM_ADMIN account, or rewrite finalized evidence. Actual admin credentials
+remain private and are shared directly with authorized operators.
 
 ## Tests and production build
 
